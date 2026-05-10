@@ -1,0 +1,16 @@
+{
+  "identifier": "default",
+  "description": "Default capability for OffMessenger windows",
+  "windows": ["main", "support"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-close",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "shell:allow-open"
+  ]
+}

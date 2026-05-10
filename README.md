@@ -1,46 +1,24 @@
-# manikuurr 💅
+# OffMessenger
 
-Сайт маникюрного салона — одностраничный лендинг.
+Desktop messenger with **liquid glass** UI. Built with **Tauri 2 + React 18 + Framer Motion**.
 
-## Как запустить локально
+## Get the .exe
 
-Это чистый HTML/CSS/JS — никаких установок не нужно.
+Push this repo → go to **Actions** tab → download artifacts when build is green.
 
-### Вариант 1 — самый простой
-Просто открой файл `index.html` в браузере (двойным кликом).
+Or build locally on Windows:
 
-### Вариант 2 — через локальный сервер (рекомендуется)
-Если у тебя установлен Python:
+```powershell
+npm ci
+npm run build
+npx tauri build
+```
+
+Output: `src-tauri/target/release/bundle/nsis/OffMessenger_0.1.0_x64-setup.exe`
+
+## Dev
+
 ```bash
-python3 -m http.server 8000
+npm install
+npm run dev
 ```
-Потом открой в браузере: http://localhost:8000
-
-Если у тебя установлен Node.js:
-```bash
-npx serve .
-```
-
-## Структура проекта
-
-```
-manikuurr/
-├── index.html    # разметка страницы
-├── styles.css    # стили
-├── script.js     # интерактив (меню, форма, анимации)
-└── README.md
-```
-
-## Что есть на сайте
-
-- Адаптивная шапка с мобильным меню
-- Hero-секция с анимацией
-- Блок «О нас»
-- Услуги с ценами (6 услуг)
-- Галерея работ
-- Карточки мастеров
-- Отзывы клиентов
-- Форма онлайн-записи
-- Футер с соцсетями
-
-Приятного использования! ✨
