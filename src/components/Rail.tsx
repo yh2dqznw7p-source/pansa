@@ -1,13 +1,12 @@
 import { motion } from "framer-motion";
 import { useApp, type Route } from "../lib/store";
 import { Avatar } from "./Avatar";
-import { IconChat, IconGear, IconSearch } from "./Icons";
+import { IconChat, IconGear } from "./Icons";
 
 type Item = { route: Route; label: string; icon: JSX.Element };
 
 const TOP: Item[] = [
   { route: "chats", label: "Чаты", icon: <IconChat /> },
-  { route: "search", label: "Поиск", icon: <IconSearch /> },
 ];
 
 export function Rail() {
@@ -43,6 +42,7 @@ export function Rail() {
         <Avatar
           seed={user.id}
           name={user.nickname}
+          src={user.avatar_url || undefined}
           size={40}
           className="rail__avatar"
         />

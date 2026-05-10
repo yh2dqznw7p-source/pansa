@@ -1,22 +1,5 @@
-// Deterministic colourful avatar — hashes the seed (nickname / id)
-// to pick a gradient from a palette. No images needed.
-
-const PALETTE: [string, string][] = [
-  ["#ff7bb0", "#b88cff"],
-  ["#7c5cff", "#4a7dff"],
-  ["#4de3a4", "#22d3ee"],
-  ["#ffbe4d", "#ff5d7d"],
-  ["#ff5d9d", "#a855ff"],
-  ["#22d3ee", "#6ea8ff"],
-  ["#b44dff", "#6ea8ff"],
-  ["#ffc85a", "#ff7bb0"],
-];
-
-function hash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+// Monochrome avatar — first letter, same grey gradient for everyone.
+// Supports an optional image URL (uploaded avatar) which overrides the initials.
 
 export function avatarInitials(name: string): string {
   if (!name) return "?";
@@ -24,39 +7,56 @@ export function avatarInitials(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || name[0].toUpperCase();
 }
 
-export function avatarGradient(seed: string): string {
-  const [a, b] = PALETTE[hash(seed || "-") % PALETTE.length];
-  return `linear-gradient(135deg, ${a}, ${b})`;
-}
-
 export function Avatar({
   seed,
   name,
   size = 44,
   className,
+  src,
 }: {
-  seed: string;
+  seed?: string;
   name: string;
   size?: number;
   className?: string;
+  src?: string | null;
 }) {
+  const common: React.CSSProperties = {
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    flexShrink: 0,
+    boxShadow: "0 0 0 1px var(--glass-border-strong)",
+    overflow: "hidden",
+  };
+
+  if (src) {
+    return (
+      <div className={className} style={common}>
+        <img
+          src={src}
+          alt={name}
+          draggable={false}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={className}
       style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        background: avatarGradient(seed),
+        ...common,
+        background: "linear-gradient(135deg, #2a2a2a, #0a0a0a)",
         display: "grid",
         placeItems: "center",
-        color: "white",
+        color: "#ffffff",
         fontWeight: 700,
         fontSize: Math.max(11, size * 0.38),
-        boxShadow: "0 0 0 1px var(--glass-border-strong)",
         letterSpacing: "0.02em",
-        flexShrink: 0,
       }}
+      aria-label={name}
+      data-seed={seed}
     >
       {avatarInitials(name)}
     </div>

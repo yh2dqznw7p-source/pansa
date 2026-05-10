@@ -44,6 +44,9 @@ pub fn build(state: AppState) -> Router {
         .route("/api/auth/login", post(login))
         .route("/api/me", get(me))
         .route("/api/me/username", post(set_username))
+        .route("/api/me/nickname", post(set_nickname))
+        .route("/api/me/description", post(set_description))
+        .route("/api/me/avatar", post(set_avatar))
         .route("/api/me/top-up", post(top_up))
         .route("/api/users/search", get(search_users))
         .route("/api/dm/open", post(open_dm))
@@ -189,6 +192,59 @@ async fn set_username(
     }
     match db::set_username(&state.db, &claims.sub, &u) {
         Ok(user) => Json(user).into_response(),
+        Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+}
+
+async fn set_nickname(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<SetNicknameReq>,
+) -> Response {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    let n = req.nickname.trim().to_string();
+    if n.len() < 2 || n.len() > 32 {
+        return err(StatusCode::BAD_REQUEST, "nickname must be 2..32 chars");
+    }
+    match db::set_nickname(&state.db, &claims.sub, &n) {
+        Ok(u) => Json(u).into_response(),
+        Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+}
+
+async fn set_description(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<SetDescriptionReq>,
+) -> Response {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    let d = req.description.trim().to_string();
+    if d.chars().count() > 100 {
+        return err(StatusCode::BAD_REQUEST, "description must be at most 100 characters");
+    }
+    match db::set_description(&state.db, &claims.sub, &d) {
+        Ok(u) => Json(u).into_response(),
+        Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+}
+
+async fn set_avatar(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<SetAvatarReq>,
+) -> Response {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    let url = req.avatar_url.trim().to_string();
+    if url.len() > 2_000_000 {
+        // ~2 MB base64 upper bound
+        return err(StatusCode::BAD_REQUEST, "avatar too large (max ~1.4 MB image)");
+    }
+    let ok = url.starts_with("data:image/") || url.starts_with("http://") || url.starts_with("https://");
+    if !ok {
+        return err(StatusCode::BAD_REQUEST, "avatar must be data URL or http(s) URL");
+    }
+    match db::set_avatar(&state.db, &claims.sub, &url) {
+        Ok(u) => Json(u).into_response(),
         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
     }
 }

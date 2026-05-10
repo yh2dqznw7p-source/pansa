@@ -1,26 +1,22 @@
 import type { AuthResult, Chat, Complaint, Message, Role, User } from "../types";
 
 // ------------------------------------------------------------------
-// Server endpoint & auth token — configurable at runtime.
-// User sets the URL in Settings; both are persisted to localStorage.
+// Server endpoint — fixed default. No port/URL UI in the app.
+// Override via VITE_OFFMESSENGER_SERVER env for dev, or the
+// OFFMESSENGER_SERVER key in localStorage (set by internal code, not UI).
 // ------------------------------------------------------------------
 
-const LS_SERVER = "offmessenger:serverUrl";
-const LS_TOKEN = "offmessenger:token";
+const DEFAULT_SERVER = (import.meta as any).env?.VITE_OFFMESSENGER_SERVER
+  || "http://127.0.0.1:5005";
 
-const DEFAULT_SERVER = "http://127.0.0.1:5005";
+const LS_TOKEN = "offmessenger:token";
 
 export function getServerUrl(): string {
   try {
-    const v = localStorage.getItem(LS_SERVER);
+    const v = localStorage.getItem("OFFMESSENGER_SERVER");
     if (v && v.trim()) return v.trim().replace(/\/$/, "");
   } catch {}
-  return DEFAULT_SERVER;
-}
-
-export function setServerUrl(url: string) {
-  const clean = url.trim().replace(/\/$/, "");
-  try { localStorage.setItem(LS_SERVER, clean); } catch {}
+  return DEFAULT_SERVER.replace(/\/$/, "");
 }
 
 export function getToken(): string | null {
@@ -33,10 +29,6 @@ function setToken(t: string | null) {
     else localStorage.removeItem(LS_TOKEN);
   } catch {}
 }
-
-// ------------------------------------------------------------------
-// Low-level fetch helper
-// ------------------------------------------------------------------
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -74,10 +66,6 @@ function tryJson(s: string): unknown {
   try { return JSON.parse(s); } catch { return null; }
 }
 
-// ------------------------------------------------------------------
-// WebSocket helper for live chat updates
-// ------------------------------------------------------------------
-
 export function openChatSocket(chatId: string, onMessage: (m: Message) => void): () => void {
   const base = getServerUrl().replace(/^http/, "ws");
   const token = getToken() ?? "";
@@ -88,13 +76,9 @@ export function openChatSocket(chatId: string, onMessage: (m: Message) => void):
       onMessage(m);
     } catch { /* ignore malformed frames */ }
   };
-  ws.onerror = () => { /* swallow — UI will rely on polling as fallback */ };
+  ws.onerror = () => { /* swallow — UI relies on polling as fallback */ };
   return () => { try { ws.close(); } catch {} };
 }
-
-// ------------------------------------------------------------------
-// Typed API surface consumed by the React app
-// ------------------------------------------------------------------
 
 interface ServerAuthResponse { token: string; user: User; }
 
@@ -111,24 +95,11 @@ async function callAuth(path: string, body: unknown): Promise<AuthResult> {
 }
 
 export const api = {
-  // Health check — used by Settings to validate server URL
-  ping: async () => {
-    const r = await request<{ ok: boolean; service: string; version: string }>(
-      "GET",
-      "/health",
-      undefined,
-      false,
-    );
-    return r;
-  },
+  ping: () => request<{ ok: boolean; service: string; version: string }>("GET", "/health", undefined, false),
 
-  // Auth
   requestCode: async (email: string) => {
     const r = await request<{ ok: boolean; dev_code?: string }>(
-      "POST",
-      "/api/auth/send-code",
-      { email },
-      false,
+      "POST", "/api/auth/send-code", { email }, false,
     );
     return r.dev_code ?? "";
   },
@@ -146,17 +117,16 @@ export const api = {
     }
   },
 
-  // Balance
   topUp: (amount: number) => request<User>("POST", "/api/me/top-up", { amount }),
 
-  // Username (unique handle for DM lookups)
   setUsername: (username: string) => request<User>("POST", "/api/me/username", { username }),
+  setNickname: (nickname: string) => request<User>("POST", "/api/me/nickname", { nickname }),
+  setDescription: (description: string) => request<User>("POST", "/api/me/description", { description }),
+  setAvatar: (avatar_url: string) => request<User>("POST", "/api/me/avatar", { avatar_url }),
 
-  // Search & DM
   searchUsers: (q: string) => request<User[]>("GET", `/api/users/search?q=${encodeURIComponent(q)}`),
   openDm: (username: string) => request<Chat>("POST", "/api/dm/open", { username }),
 
-  // Chats
   listChats: () => request<Chat[]>("GET", "/api/chats"),
   createChat: (title: string) => request<Chat>("POST", "/api/chats", { title }),
   listMessages: (chatId: string) =>
@@ -164,7 +134,6 @@ export const api = {
   sendMessage: (chatId: string, text: string) =>
     request<Message>("POST", `/api/chats/${encodeURIComponent(chatId)}/messages`, { chat_id: chatId, text }),
 
-  // Complaints
   listComplaints: () => request<Complaint[]>("GET", "/api/complaints"),
   submitComplaint: (target: string, reason: string) =>
     request<Complaint>("POST", "/api/complaints", { target, reason }),
@@ -172,21 +141,9 @@ export const api = {
     request<{ ok: boolean }>("POST", `/api/complaints/${encodeURIComponent(id)}/resolve`)
       .then((r) => r.ok),
 
-  // Roles
   listUsers: () => request<User[]>("GET", "/api/users"),
   assignRole: (userId: string, role: Role) =>
     request<User>("POST", "/api/roles/assign", { user_id: userId, role }),
-
-  // Windows
-  openSupport: async () => {
-    const hasTauri = typeof window !== "undefined" && !!(window as any).__TAURI_INTERNALS__;
-    if (hasTauri) {
-      const { invoke } = await import("@tauri-apps/api/core");
-      await invoke("open_support_window");
-    } else {
-      window.open("/support.html", "_blank");
-    }
-  },
 };
 
 export { ApiError };

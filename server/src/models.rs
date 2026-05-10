@@ -53,6 +53,10 @@ pub struct User {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub username: Option<String>,
     pub nickname: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar_url: Option<String>,
     pub balance: i64,
     pub role: Role,
     pub created_at: i64,
@@ -137,6 +141,22 @@ pub struct OpenDmReq {
 #[derive(Deserialize)]
 pub struct SetUsernameReq {
     pub username: String,
+}
+
+#[derive(Deserialize)]
+pub struct SetNicknameReq {
+    pub nickname: String,
+}
+
+#[derive(Deserialize)]
+pub struct SetDescriptionReq {
+    pub description: String,
+}
+
+#[derive(Deserialize)]
+pub struct SetAvatarReq {
+    /// Data-URL (`data:image/png;base64,...`) or a public URL.
+    pub avatar_url: String,
 }
 
 #[derive(Deserialize)]

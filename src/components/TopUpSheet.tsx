@@ -28,9 +28,7 @@ export function TopUpSheet() {
       closeTopUp();
     } catch (e: any) {
       setErr(typeof e === "string" ? e : e?.message ?? "Ошибка");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
   return (
@@ -54,7 +52,7 @@ export function TopUpSheet() {
               <div>
                 <div className="h2">Пополнение</div>
                 <div className="subtle" style={{ fontSize: 12, marginTop: 4 }}>
-                  Выберите быстрый набор или введите сумму
+                  Выберите набор или введите сумму
                 </div>
               </div>
               <div style={{ marginLeft: "auto" }}>
@@ -73,7 +71,6 @@ export function TopUpSheet() {
                   whileTap={{ scale: 0.96 }}
                 >
                   <div className="token-card__value">{v} ₽</div>
-                  <div className="token-card__sub">{v * 10} токенов</div>
                 </motion.button>
               ))}
             </div>

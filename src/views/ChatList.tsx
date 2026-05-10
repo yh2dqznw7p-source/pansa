@@ -3,8 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Avatar } from "../components/Avatar";
-import { IconSearch } from "../components/Icons";
-import type { Chat } from "../types";
+import type { Chat, User } from "../types";
 
 function timeShort(ts: number): string {
   const d = new Date(ts * 1000);
@@ -20,14 +19,12 @@ function chatDisplayName(c: Chat): string {
   return c.title || "Без названия";
 }
 
-function chatAvatarSeed(c: Chat): string {
-  return c.is_dm && c.peer ? c.peer.id : c.id;
-}
-
 export function ChatList() {
-  const { activeChatId, setActiveChat, setRoute } = useApp();
+  const { activeChatId, setActiveChat } = useApp();
   const [chats, setChats] = useState<Chat[]>([]);
   const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<User[]>([]);
+  const [searching, setSearching] = useState(false);
 
   async function load() {
     try {
@@ -38,11 +35,26 @@ export function ChatList() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
+    const t = setInterval(load, 4000);
     return () => clearInterval(t);
   }, []);
 
-  const filtered = useMemo(() => {
+  // Debounced server-side search by username/nickname.
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) { setHits([]); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const us = await api.searchUsers(q);
+        setHits(us);
+      } catch { setHits([]); }
+      finally { setSearching(false); }
+    }, 180);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const filteredChats = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return chats;
     return chats.filter((c) => {
@@ -52,73 +64,94 @@ export function ChatList() {
     });
   }, [chats, query]);
 
+  async function openDmFromHit(u: User) {
+    if (!u.username) return;
+    try {
+      const chat = await api.openDm(u.username);
+      setActiveChat(chat.id);
+      setQuery("");
+    } catch {}
+  }
+
+  const showingResults = query.trim().length > 0;
+
   return (
     <div className="pane lg">
       <div className="pane__head">
-        <div className="pane__title pane__title--brand">Чаты</div>
-        <div style={{ marginLeft: "auto" }}>
-          <button
-            className="btn btn--icon btn--primary"
-            onClick={() => setRoute("search")}
-            aria-label="Найти и написать"
-            title="Найти пользователя"
-          >
-            <IconSearch size={18} />
-          </button>
-        </div>
+        <div className="pane__title">Чаты</div>
       </div>
 
       <div className="search">
-        <IconSearch size={16} className="search__icon" />
         <input
           className="input"
-          placeholder="Найти чат"
+          placeholder="Поиск или юзернейм"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
       <div className="chat-list scroll">
-        {filtered.map((c, i) => (
+        {filteredChats.map((c, i) => (
           <motion.div
             key={c.id}
             className={`chat-row ${activeChatId === c.id ? "chat-row--active" : ""}`}
-            onClick={() => setActiveChat(c.id)}
+            onClick={() => { setActiveChat(c.id); setQuery(""); }}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.02, 0.2), duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: Math.min(i * 0.02, 0.2), duration: 0.22 }}
             whileHover={{ x: 2 }}
           >
-            <Avatar seed={chatAvatarSeed(c)} name={chatDisplayName(c)} size={44} />
+            <Avatar
+              seed={c.is_dm && c.peer ? c.peer.id : c.id}
+              name={chatDisplayName(c)}
+              src={c.is_dm && c.peer ? c.peer.avatar_url ?? undefined : undefined}
+              size={44}
+            />
             <div className="chat-row__body">
               <div className="chat-row__top">
-                <div className="chat-row__title">
-                  {chatDisplayName(c)}
-                  {c.peer?.username && (
-                    <span className="subtle" style={{ fontWeight: 400, marginLeft: 6, fontSize: 12 }}>
-                      @{c.peer.username}
-                    </span>
-                  )}
-                </div>
+                <div className="chat-row__title">{chatDisplayName(c)}</div>
                 <div className="chat-row__time">{timeShort(c.last_message_at)}</div>
               </div>
               <div className="chat-row__preview">
-                {c.last_message ?? (c.is_dm ? "Откройте, чтобы написать" : "Нет сообщений")}
+                {c.peer?.username ? `@${c.peer.username}` : (c.last_message ?? "Откройте, чтобы написать")}
               </div>
             </div>
           </motion.div>
         ))}
 
-        {filtered.length === 0 && (
-          <div className="center muted" style={{ padding: 40, fontSize: 13, textAlign: "center" }}>
-            {query ? "Ничего не найдено" : (
-              <>
-                <div>Чатов нет</div>
-                <div className="subtle" style={{ marginTop: 6, fontSize: 12 }}>
-                  Нажмите <b>🔍</b> вверху и найдите собеседника по юзернейму
+        {showingResults && (
+          <>
+            <div className="chat-list__divider">Пользователи</div>
+            {hits.filter((u) => !filteredChats.some((c) => c.peer?.id === u.id)).map((u) => (
+              <motion.div
+                key={`u-${u.id}`}
+                className="chat-row"
+                onClick={() => openDmFromHit(u)}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                whileHover={{ x: 2 }}
+              >
+                <Avatar seed={u.id} name={u.nickname} src={u.avatar_url || undefined} size={44} />
+                <div className="chat-row__body">
+                  <div className="chat-row__top">
+                    <div className="chat-row__title">{u.nickname}</div>
+                  </div>
+                  <div className="chat-row__preview">
+                    {u.username ? `@${u.username}` : "без юзернейма"}
+                  </div>
                 </div>
-              </>
+              </motion.div>
+            ))}
+            {!searching && hits.length === 0 && filteredChats.length === 0 && (
+              <div className="chat-list__empty">Ничего не найдено по «{query.trim()}»</div>
             )}
+          </>
+        )}
+
+        {!showingResults && filteredChats.length === 0 && (
+          <div className="chat-list__empty">
+            Введите юзернейм, чтобы начать чат
           </div>
         )}
       </div>

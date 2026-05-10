@@ -3,7 +3,7 @@ import type { User } from "../types";
 import { api } from "./api";
 
 export type Theme = "light" | "dark" | "system";
-export type Route = "login" | "register" | "chats" | "search" | "settings";
+export type Route = "login" | "register" | "chats" | "settings";
 
 interface AppState {
   user: User | null;
@@ -12,10 +12,20 @@ interface AppState {
   activeChatId: string | null;
   topUpOpen: boolean;
 
+  // UI toggles
+  particles: boolean;
+
+  // Notifications
   notifications: boolean;
   sounds: boolean;
+
+  // Privacy
   readReceipts: boolean;
   lastSeen: boolean;
+  allowGroupInvites: boolean;
+  allowChannelInvites: boolean;
+
+  // Chat
   compactChats: boolean;
 
   setUser: (u: User | null) => void;
@@ -24,7 +34,9 @@ interface AppState {
   setTheme: (t: Theme) => void;
   openTopUp: () => void;
   closeTopUp: () => void;
-  toggle: (key: keyof Pick<AppState, "notifications" | "sounds" | "readReceipts" | "lastSeen" | "compactChats">) => void;
+  toggle: (key: keyof Pick<AppState,
+    "particles" | "notifications" | "sounds" | "readReceipts" | "lastSeen" |
+    "compactChats" | "allowGroupInvites" | "allowChannelInvites">) => void;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -42,10 +54,13 @@ function saveSettings(s: Partial<AppState>) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify({
       theme: s.theme,
+      particles: s.particles,
       notifications: s.notifications,
       sounds: s.sounds,
       readReceipts: s.readReceipts,
       lastSeen: s.lastSeen,
+      allowGroupInvites: s.allowGroupInvites,
+      allowChannelInvites: s.allowChannelInvites,
       compactChats: s.compactChats,
     }));
   } catch {}
@@ -60,10 +75,13 @@ export const useApp = create<AppState>((set, get) => ({
   activeChatId: null,
   topUpOpen: false,
 
+  particles: initial.particles ?? true,
   notifications: initial.notifications ?? true,
   sounds: initial.sounds ?? true,
   readReceipts: initial.readReceipts ?? true,
   lastSeen: initial.lastSeen ?? true,
+  allowGroupInvites: initial.allowGroupInvites ?? true,
+  allowChannelInvites: initial.allowChannelInvites ?? true,
   compactChats: initial.compactChats ?? false,
 
   setUser: (u) => set({ user: u, route: u ? "chats" : "login" }),

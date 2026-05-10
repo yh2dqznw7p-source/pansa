@@ -42,20 +42,68 @@ jobs:
       - name: Build support (MSI + NSIS)
         run: npx tauri build --config support/tauri.conf.json --bundles msi nsis
 
-      - name: Collect artifacts
+      - name: Build server binary
+        run: cargo build --release -p offmessenger-server --target x86_64-pc-windows-msvc
+
+      # ------------------------------------------------------------
+      # Assemble the 4-folder ZIP artefact:
+      #   OffMessenger/           <- client exe + installers
+      #   OffMessengerServer/     <- server binary + run scripts
+      #   OffMessengerSupport/    <- support exe + installers
+      #   Sources/                <- repo snapshot (no node_modules / target)
+      # ------------------------------------------------------------
+      - name: Assemble release bundle
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Get-ChildItem -Recurse -Path target/release/bundle -Include *.msi,*.exe -ErrorAction SilentlyContinue | ForEach-Object {
-            Copy-Item $_.FullName -Destination artifacts -Force
+          $root = "release-bundle\OffMessenger-Release"
+          New-Item -ItemType Directory -Force -Path "$root\OffMessenger" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$root\OffMessengerServer" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$root\OffMessengerSupport" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$root\Sources" | Out-Null
+
+          # Client
+          Get-ChildItem -Recurse -Path target/release/bundle/msi  -Filter "OffMessenger_*.msi" -ErrorAction SilentlyContinue  | Copy-Item -Destination "$root\OffMessenger" -Force
+          Get-ChildItem -Recurse -Path target/release/bundle/nsis -Filter "OffMessenger_*.exe" -ErrorAction SilentlyContinue | Copy-Item -Destination "$root\OffMessenger" -Force
+          if (Test-Path target/release/offmessenger.exe) {
+            Copy-Item target/release/offmessenger.exe "$root\OffMessenger\OffMessenger.exe" -Force
           }
-          if (Test-Path target/release/OffMessenger.exe) { Copy-Item target/release/OffMessenger.exe -Destination artifacts -Force }
-          if (Test-Path "target/release/OffMessenger Support.exe") { Copy-Item "target/release/OffMessenger Support.exe" -Destination artifacts -Force }
-          Get-ChildItem artifacts
+
+          # Support
+          Get-ChildItem -Recurse -Path target/release/bundle/msi  -Filter "OffMessenger Support_*.msi" -ErrorAction SilentlyContinue  | Copy-Item -Destination "$root\OffMessengerSupport" -Force
+          Get-ChildItem -Recurse -Path target/release/bundle/nsis -Filter "OffMessenger Support_*.exe" -ErrorAction SilentlyContinue | Copy-Item -Destination "$root\OffMessengerSupport" -Force
+          if (Test-Path "target/release/offmessenger-support.exe") {
+            Copy-Item "target/release/offmessenger-support.exe" "$root\OffMessengerSupport\OffMessengerSupport.exe" -Force
+          }
+
+          # Server
+          Copy-Item "target\x86_64-pc-windows-msvc\release\offmessenger-server.exe" "$root\OffMessengerServer\offmessenger-server.exe" -Force
+          Copy-Item server/docker-compose.yml "$root\OffMessengerServer\" -Force -ErrorAction SilentlyContinue
+          Copy-Item server/Dockerfile "$root\OffMessengerServer\" -Force -ErrorAction SilentlyContinue
+          Copy-Item server/offmessenger-server.service "$root\OffMessengerServer\" -Force -ErrorAction SilentlyContinue
+          @"
+          @echo off
+          rem Quick-start: listen on localhost:5005 with SQLite in .\data
+          set BIND=127.0.0.1:5005
+          set DATA_DIR=.\data
+          set JWT_SECRET=change-me-in-production-please
+          set SEND_CODE_EXPOSE=true
+          if not exist data mkdir data
+          offmessenger-server.exe
+          "@ | Out-File -FilePath "$root\OffMessengerServer\run.bat" -Encoding ASCII
+
+          # Sources snapshot (git archive keeps .gitignore rules + excludes node_modules/target)
+          git archive --format=zip -o sources.zip HEAD
+          Expand-Archive sources.zip -DestinationPath "$root\Sources" -Force
+          Remove-Item sources.zip -Force
+
+          # Bundle everything into one ZIP
+          Compress-Archive -Path "$root\*" -DestinationPath "release-bundle\OffMessenger-Release.zip" -Force
+
+          Get-ChildItem -Recurse $root | Select-Object FullName, Length | Format-Table -AutoSize
 
       - uses: actions/upload-artifact@v4
         with:
-          name: offmessenger-windows
-          path: artifacts/*
+          name: OffMessenger-Release
+          path: release-bundle/OffMessenger-Release.zip
           if-no-files-found: error
           retention-days: 30

@@ -67,9 +67,12 @@ pub fn open_pool(path: &str) -> Result<DbPool> {
         "#,
     )?;
 
-    // Lightweight migrations for older DBs (adds columns if missing)
+    // Lightweight migrations for older DBs (adds columns if missing).
+    // Each ALTER is wrapped in _ = conn.execute so "duplicate column" errors are ignored.
     let _ = conn.execute("ALTER TABLE users ADD COLUMN username TEXT", []);
     let _ = conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN description TEXT", []);
+    let _ = conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT", []);
     let _ = conn.execute("ALTER TABLE chats ADD COLUMN is_dm INTEGER NOT NULL DEFAULT 0", []);
 
     Ok(pool)
@@ -90,7 +93,7 @@ pub fn create_user(pool: &DbPool, email: &str, nickname: &str, password_hash: &s
 
 pub fn get_user(pool: &DbPool, id: &str) -> Result<Option<User>> {
     let conn = pool.get()?;
-    let mut stmt = conn.prepare("SELECT id, email, username, nickname, balance, role, created_at FROM users WHERE id = ?")?;
+    let mut stmt = conn.prepare("SELECT id, email, username, nickname, description, avatar_url, balance, role, created_at FROM users WHERE id = ?")?;
     let mut rows = stmt.query(params![id])?;
     if let Some(r) = rows.next()? {
         Ok(Some(User {
@@ -98,9 +101,11 @@ pub fn get_user(pool: &DbPool, id: &str) -> Result<Option<User>> {
             email: r.get(1)?,
             username: r.get(2).ok(),
             nickname: r.get(3)?,
-            balance: r.get(4)?,
-            role: Role::from_str(&r.get::<_, String>(5)?),
-            created_at: r.get(6)?,
+            description: r.get(4).ok(),
+            avatar_url: r.get(5).ok(),
+            balance: r.get(6)?,
+            role: Role::from_str(&r.get::<_, String>(7)?),
+            created_at: r.get(8)?,
         }))
     } else {
         Ok(None)
@@ -109,7 +114,7 @@ pub fn get_user(pool: &DbPool, id: &str) -> Result<Option<User>> {
 
 pub fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<(User, String)>> {
     let conn = pool.get()?;
-    let mut stmt = conn.prepare("SELECT id, email, username, nickname, balance, role, created_at, password_hash FROM users WHERE email = ?")?;
+    let mut stmt = conn.prepare("SELECT id, email, username, nickname, description, avatar_url, balance, role, created_at, password_hash FROM users WHERE email = ?")?;
     let mut rows = stmt.query(params![email])?;
     if let Some(r) = rows.next()? {
         let user = User {
@@ -117,11 +122,13 @@ pub fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<(User, Str
             email: r.get(1)?,
             username: r.get(2).ok(),
             nickname: r.get(3)?,
-            balance: r.get(4)?,
-            role: Role::from_str(&r.get::<_, String>(5)?),
-            created_at: r.get(6)?,
+            description: r.get(4).ok(),
+            avatar_url: r.get(5).ok(),
+            balance: r.get(6)?,
+            role: Role::from_str(&r.get::<_, String>(7)?),
+            created_at: r.get(8)?,
         };
-        let hash: String = r.get(7)?;
+        let hash: String = r.get(9)?;
         Ok(Some((user, hash)))
     } else {
         Ok(None)
@@ -130,7 +137,7 @@ pub fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<(User, Str
 
 pub fn get_user_by_username(pool: &DbPool, username: &str) -> Result<Option<User>> {
     let conn = pool.get()?;
-    let mut stmt = conn.prepare("SELECT id, email, username, nickname, balance, role, created_at FROM users WHERE username = ? COLLATE NOCASE")?;
+    let mut stmt = conn.prepare("SELECT id, email, username, nickname, description, avatar_url, balance, role, created_at FROM users WHERE username = ? COLLATE NOCASE")?;
     let mut rows = stmt.query(params![username])?;
     if let Some(r) = rows.next()? {
         Ok(Some(User {
@@ -138,9 +145,11 @@ pub fn get_user_by_username(pool: &DbPool, username: &str) -> Result<Option<User
             email: r.get(1)?,
             username: r.get(2).ok(),
             nickname: r.get(3)?,
-            balance: r.get(4)?,
-            role: Role::from_str(&r.get::<_, String>(5)?),
-            created_at: r.get(6)?,
+            description: r.get(4).ok(),
+            avatar_url: r.get(5).ok(),
+            balance: r.get(6)?,
+            role: Role::from_str(&r.get::<_, String>(7)?),
+            created_at: r.get(8)?,
         }))
     } else {
         Ok(None)
@@ -149,7 +158,6 @@ pub fn get_user_by_username(pool: &DbPool, username: &str) -> Result<Option<User
 
 pub fn set_username(pool: &DbPool, user_id: &str, username: &str) -> Result<User> {
     let conn = pool.get()?;
-    // Uniqueness is enforced by the UNIQUE INDEX on users(username)
     conn.execute(
         "UPDATE users SET username = ? WHERE id = ?",
         params![username, user_id],
@@ -157,18 +165,47 @@ pub fn set_username(pool: &DbPool, user_id: &str, username: &str) -> Result<User
     get_user(pool, user_id)?.ok_or_else(|| anyhow!("user not found"))
 }
 
+pub fn set_nickname(pool: &DbPool, user_id: &str, nickname: &str) -> Result<User> {
+    let conn = pool.get()?;
+    conn.execute(
+        "UPDATE users SET nickname = ? WHERE id = ?",
+        params![nickname, user_id],
+    )?;
+    get_user(pool, user_id)?.ok_or_else(|| anyhow!("user not found"))
+}
+
+pub fn set_description(pool: &DbPool, user_id: &str, description: &str) -> Result<User> {
+    let conn = pool.get()?;
+    conn.execute(
+        "UPDATE users SET description = ? WHERE id = ?",
+        params![description, user_id],
+    )?;
+    get_user(pool, user_id)?.ok_or_else(|| anyhow!("user not found"))
+}
+
+pub fn set_avatar(pool: &DbPool, user_id: &str, avatar_url: &str) -> Result<User> {
+    let conn = pool.get()?;
+    conn.execute(
+        "UPDATE users SET avatar_url = ? WHERE id = ?",
+        params![avatar_url, user_id],
+    )?;
+    get_user(pool, user_id)?.ok_or_else(|| anyhow!("user not found"))
+}
+
 pub fn list_users(pool: &DbPool) -> Result<Vec<User>> {
     let conn = pool.get()?;
-    let mut stmt = conn.prepare("SELECT id, email, username, nickname, balance, role, created_at FROM users ORDER BY created_at DESC")?;
+    let mut stmt = conn.prepare("SELECT id, email, username, nickname, description, avatar_url, balance, role, created_at FROM users ORDER BY created_at DESC")?;
     let iter = stmt.query_map([], |r| {
         Ok(User {
             id: r.get(0)?,
             email: r.get(1)?,
             username: r.get(2).ok(),
             nickname: r.get(3)?,
-            balance: r.get(4)?,
-            role: Role::from_str(&r.get::<_, String>(5)?),
-            created_at: r.get(6)?,
+            description: r.get(4).ok(),
+            avatar_url: r.get(5).ok(),
+            balance: r.get(6)?,
+            role: Role::from_str(&r.get::<_, String>(7)?),
+            created_at: r.get(8)?,
         })
     })?;
     Ok(iter.filter_map(|r| r.ok()).collect())
@@ -179,7 +216,7 @@ pub fn search_users(pool: &DbPool, query: &str, limit: i64) -> Result<Vec<User>>
     let conn = pool.get()?;
     let pat = format!("%{}%", query);
     let mut stmt = conn.prepare(
-        "SELECT id, email, username, nickname, balance, role, created_at
+        "SELECT id, email, username, nickname, description, avatar_url, balance, role, created_at
          FROM users
          WHERE username LIKE ? COLLATE NOCASE
             OR nickname LIKE ? COLLATE NOCASE
@@ -195,9 +232,11 @@ pub fn search_users(pool: &DbPool, query: &str, limit: i64) -> Result<Vec<User>>
             email: r.get(1)?,
             username: r.get(2).ok(),
             nickname: r.get(3)?,
-            balance: r.get(4)?,
-            role: Role::from_str(&r.get::<_, String>(5)?),
-            created_at: r.get(6)?,
+            description: r.get(4).ok(),
+            avatar_url: r.get(5).ok(),
+            balance: r.get(6)?,
+            role: Role::from_str(&r.get::<_, String>(7)?),
+            created_at: r.get(8)?,
         })
     })?;
     Ok(iter.filter_map(|r| r.ok()).collect())

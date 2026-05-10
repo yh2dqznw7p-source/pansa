@@ -30,7 +30,7 @@ export function Register() {
       setSentCode(c || null);
       setStep("code");
     } catch (e: any) {
-      setErr(typeof e === "string" ? e : e?.message ?? "Ошибка. Проверьте адрес сервера в настройках.");
+      setErr(typeof e === "string" ? e : e?.message ?? "Ошибка");
     } finally { setBusy(false); }
   }
 
@@ -55,7 +55,7 @@ export function Register() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="auth-hero">
-          <div className="auth-hero__logo">O</div>
+          <div className="auth-hero__logo" aria-hidden />
           <div className="auth-hero__title">Создать аккаунт</div>
           <div className="auth-hero__sub">
             {step === "form" ? "Заполните данные — отправим код подтверждения" : "Введите код"}
@@ -105,8 +105,8 @@ export function Register() {
         {step === "code" && (
           <form onSubmit={verifyAndRegister} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="muted" style={{ fontSize: 13, textAlign: "center" }}>
-              Код отправлен на сервер.
-              {sentCode && <> <span className="subtle">(dev: <b style={{ color: "var(--accent)" }}>{sentCode}</b>)</span></>}
+              Код отправлен.
+              {sentCode && <> <span className="subtle">(dev: <b>{sentCode}</b>)</span></>}
             </div>
             <div className="field">
               <label className="field__label">Код подтверждения</label>

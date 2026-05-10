@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { api } from "../lib/api";
 import { useApp } from "../lib/store";
-import { IconApple, IconGoogle, IconVK } from "../components/Icons";
 
 export function Login() {
   const { setUser, setRoute } = useApp();
@@ -20,13 +19,7 @@ export function Login() {
       else setUser(r.user);
     } catch (e: any) {
       setErr(typeof e === "string" ? e : e?.message ?? "Ошибка");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function oauthStub(provider: string) {
-    setErr(`${provider}: нужен client_id в настройках провайдера`);
+    } finally { setBusy(false); }
   }
 
   return (
@@ -39,7 +32,7 @@ export function Login() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="auth-hero">
-          <div className="auth-hero__logo">O</div>
+          <div className="auth-hero__logo" aria-hidden />
           <div className="auth-hero__title">Здравствуйте</div>
           <div className="auth-hero__sub">рады снова вас видеть в OffMessenger</div>
         </div>
@@ -81,22 +74,8 @@ export function Login() {
           {busy ? "Входим…" : "Войти"}
         </motion.button>
 
-        <div className="divider">или</div>
-
-        <div className="social-row">
-          <button type="button" className="btn" onClick={() => oauthStub("Google")}>
-            <IconGoogle /> Google
-          </button>
-          <button type="button" className="btn" onClick={() => oauthStub("VK")}>
-            <IconVK /> ВКонтакте
-          </button>
-          <button type="button" className="btn" onClick={() => oauthStub("Apple")}>
-            <IconApple /> Apple
-          </button>
-        </div>
-
         <div className="link-row">
-          <span>Нет аккаунта? </span>
+          <span className="muted">Нет аккаунта? </span>
           <a href="#" onClick={(e) => { e.preventDefault(); setRoute("register"); }}>
             Зарегистрироваться
           </a>

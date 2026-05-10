@@ -3,17 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import { api, openChatSocket } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Avatar } from "../components/Avatar";
-import { IconDots, IconPhone, IconSend, IconVideo } from "../components/Icons";
+import { IconSend } from "../components/Icons";
 import type { Chat, Message } from "../types";
 
 function fmtTime(ts: number): string {
   return new Date(ts * 1000).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" });
 }
-
 function sameDay(a: number, b: number): boolean {
   return new Date(a * 1000).toDateString() === new Date(b * 1000).toDateString();
 }
-
 function fmtDay(ts: number): string {
   const d = new Date(ts * 1000);
   const today = new Date();
@@ -31,7 +29,7 @@ export function Conversation() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!activeChatId) return;
+    if (!activeChatId) { setChat(null); setMessages([]); return; }
     let cancelled = false;
     (async () => {
       try {
@@ -64,11 +62,12 @@ export function Conversation() {
 
   if (!activeChatId || !chat) {
     return (
-      <div className="pane lg conv center" style={{ padding: 40 }}>
-        <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div className="h2" style={{ marginBottom: 8 }}>Выберите чат</div>
-          <div className="muted" style={{ fontSize: 13 }}>
-            Найдите собеседника по юзернейму на вкладке «Поиск» — чат откроется автоматически.
+      <div className="pane lg conv conv--empty">
+        <div className="conv__placeholder">
+          <div className="conv__placeholder-glow" aria-hidden />
+          <div className="h1">Выберите чат</div>
+          <div className="muted" style={{ fontSize: 14, marginTop: 10 }}>
+            Найдите собеседника по юзернейму в списке чатов слева
           </div>
         </div>
       </div>
@@ -76,21 +75,17 @@ export function Conversation() {
   }
 
   const title = chat.is_dm && chat.peer ? chat.peer.nickname : chat.title;
-  const subtitle = chat.is_dm && chat.peer?.username ? `@${chat.peer.username}` : "в сети";
+  const subtitle = chat.is_dm && chat.peer?.username ? `@${chat.peer.username}` : "";
+  const avatarSrc = chat.is_dm && chat.peer ? chat.peer.avatar_url ?? undefined : undefined;
   const avatarSeed = chat.is_dm && chat.peer ? chat.peer.id : chat.id;
 
   return (
     <div className="pane lg conv">
       <div className="conv__head">
-        <Avatar seed={avatarSeed} name={title} size={44} />
+        <Avatar seed={avatarSeed} name={title} src={avatarSrc} size={44} />
         <div>
           <div className="conv__head-title">{title}</div>
-          <div className="conv__head-sub">{subtitle}</div>
-        </div>
-        <div className="conv__head-actions">
-          <button className="btn btn--ghost btn--icon" title="Звонок"><IconPhone size={18} /></button>
-          <button className="btn btn--ghost btn--icon" title="Видео"><IconVideo size={18} /></button>
-          <button className="btn btn--ghost btn--icon" title="Ещё"><IconDots size={18} /></button>
+          {subtitle && <div className="conv__head-sub">{subtitle}</div>}
         </div>
       </div>
 

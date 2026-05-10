@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-import { Ambient } from "./components/Ambient";
+import { Particles } from "./components/Particles";
 import { IconPlus } from "./components/Icons";
-import { LiquidGlassFilter } from "./components/LiquidGlassFilter";
 import { Rail } from "./components/Rail";
 import { TopUpSheet } from "./components/TopUpSheet";
 import { useApp } from "./lib/store";
@@ -10,7 +9,6 @@ import { ChatList } from "./views/ChatList";
 import { Conversation } from "./views/Conversation";
 import { Login } from "./views/Login";
 import { Register } from "./views/Register";
-import { Search } from "./views/Search";
 import { Settings } from "./views/Settings";
 
 function TopBar() {
@@ -18,7 +16,7 @@ function TopBar() {
   return (
     <header className="topbar drag">
       <div className="topbar__brand">
-        <div className="topbar__logo">O</div>
+        <div className="topbar__logo" aria-hidden />
         <div className="topbar__name">OffMessenger</div>
       </div>
       <div className="topbar__right no-drag">
@@ -38,7 +36,7 @@ function TopBar() {
           className="plus-btn"
           onClick={openTopUp}
           whileTap={{ scale: 0.9 }}
-          aria-label="Пополнить баланс"
+          aria-label="Пополнить"
           title="Пополнить"
         >
           <IconPlus size={18} />
@@ -49,31 +47,35 @@ function TopBar() {
 }
 
 export default function App() {
-  const { user, route, refreshUser } = useApp();
+  const { user, route, refreshUser, particles } = useApp();
   useEffect(() => { refreshUser(); }, [refreshUser]);
 
   if (!user) {
     return (
       <>
-        <Ambient />
-        <LiquidGlassFilter />
+        <div className="lg-ambient" aria-hidden>
+          <div className="lg-ambient__grid" />
+          <div className="lg-ambient__noise" />
+        </div>
+        {particles && <Particles density={48} />}
         {route === "register" ? <Register /> : <Login />}
       </>
     );
   }
 
-  // In "chats" we show the middle list. Other routes fill the right area.
   const showList = route === "chats";
 
   return (
     <>
-      <Ambient />
-      <LiquidGlassFilter />
+      <div className="lg-ambient" aria-hidden>
+        <div className="lg-ambient__grid" />
+        <div className="lg-ambient__noise" />
+      </div>
+      {particles && <Particles density={60} />}
       <TopUpSheet />
 
       <div className="shell">
         <TopBar />
-
         <div className="shell__body">
           <Rail />
 
@@ -83,7 +85,7 @@ export default function App() {
             key={route}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3 }}
             style={{
               minWidth: 0,
               minHeight: 0,
@@ -91,7 +93,6 @@ export default function App() {
             }}
           >
             {route === "chats" && <Conversation />}
-            {route === "search" && <Search />}
             {route === "settings" && <Settings />}
           </motion.div>
         </div>
