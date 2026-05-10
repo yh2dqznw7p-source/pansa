@@ -1,0 +1,74 @@
+name: Build Windows (MSI / NSIS EXE)
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cargo cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@^2
+
+      - name: Build Tauri (MSI + NSIS)
+        env:
+          # Tauri does not ship a bundling private key by default.
+          # For Microsoft Store you will sign later with your own certificate.
+          TAURI_SIGNING_PRIVATE_KEY: ""
+        run: npx tauri build --bundles msi nsis
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Get-ChildItem -Recurse -Path src-tauri/target/release/bundle `
+            -Include *.msi,*.exe | ForEach-Object {
+              Copy-Item $_.FullName -Destination artifacts -Force
+              Write-Host "collected: $($_.Name)"
+            }
+          Get-ChildItem artifacts
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: offmessenger-windows-installers
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload raw exe (portable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: offmessenger-portable-exe
+          path: src-tauri/target/release/OffMessenger.exe
+          if-no-files-found: warn
+          retention-days: 30

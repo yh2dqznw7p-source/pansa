@@ -1,0 +1,51 @@
+export type Role =
+  | "user"
+  | "helper"
+  | "supporter"
+  | "creator"
+  | "admin"
+  | "owner"
+  | "title";
+
+export interface User {
+  id: string;
+  email: string;
+  nickname: string;
+  balance: number;
+  role: Role;
+  created_at: number;
+}
+
+export interface AuthResult {
+  ok: boolean;
+  message: string | null;
+  user: User | null;
+}
+
+export interface Chat {
+  id: string;
+  title: string;
+  members: string[];
+  last_message_at: number;
+}
+
+export interface Message {
+  id: string;
+  chat_id: string;
+  author_id: string;
+  author_nickname: string;
+  text: string;
+  created_at: number;
+}
+
+export type ComplaintStatus = "open" | "inprogress" | "resolved" | "rejected";
+
+export interface Complaint {
+  id: string;
+  from_user_id: string;
+  from_nickname: string;
+  target: string;
+  reason: string;
+  status: ComplaintStatus;
+  created_at: number;
+}

@@ -1,0 +1,37 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/gen/
+src-tauri/Cargo.lock
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+*.msi
+*.exe
+*.msix
+*.appx
