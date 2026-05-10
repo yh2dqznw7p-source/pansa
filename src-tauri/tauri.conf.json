@@ -59,11 +59,10 @@
         "type": "embedBootstrapper"
       },
       "wix": {
-        "language": ["en-US", "ru-RU"]
+        "language": ["en-US"]
       },
       "nsis": {
-        "installMode": "perUser",
-        "languages": ["English", "Russian"]
+        "installMode": "currentUser"
       }
     },
     "category": "SocialNetworking",
