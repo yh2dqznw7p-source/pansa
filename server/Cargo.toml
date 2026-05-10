@@ -1,0 +1,32 @@
+[package]
+name = "offmessenger-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "OffMessenger backend server (HTTP + WebSocket)"
+
+[[bin]]
+name = "offmessenger-server"
+path = "src/main.rs"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }
+uuid = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true }
+parking_lot = { workspace = true }
+once_cell = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+argon2 = { workspace = true }
+jsonwebtoken = { workspace = true }
+rusqlite = { workspace = true }
+r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
+futures-util = { workspace = true }

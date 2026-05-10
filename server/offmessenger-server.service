@@ -1,0 +1,33 @@
+# systemd unit for running offmessenger-server as a Linux service.
+# Installation:
+#   sudo cp offmessenger-server /usr/local/bin/
+#   sudo useradd -r -s /usr/sbin/nologin offmsg
+#   sudo mkdir -p /var/lib/offmessenger && sudo chown offmsg /var/lib/offmessenger
+#   sudo cp offmessenger-server.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now offmessenger-server
+
+[Unit]
+Description=OffMessenger backend server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=offmsg
+Group=offmsg
+Environment=BIND=0.0.0.0:5005
+Environment=DATA_DIR=/var/lib/offmessenger
+Environment=JWT_SECRET=CHANGE-ME-TO-A-LONG-RANDOM-STRING
+Environment=SEND_CODE_EXPOSE=false
+Environment=RUST_LOG=offmessenger_server=info
+ExecStart=/usr/local/bin/offmessenger-server
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/offmessenger
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -25,7 +25,8 @@ export interface AuthResult {
 export interface Chat {
   id: string;
   title: string;
-  members: string[];
+  owner_id: string;
+  created_at: number;
   last_message_at: number;
 }
 
@@ -46,6 +47,6 @@ export interface Complaint {
   from_nickname: string;
   target: string;
   reason: string;
-  status: ComplaintStatus;
+  status: string;
   created_at: number;
 }

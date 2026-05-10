@@ -1,0 +1,27 @@
+# Minimal production compose for a single dedicated server (дедик).
+# 1. Copy this file + the repo onto your VPS
+# 2. Edit the JWT_SECRET below (long random string)
+# 3. docker compose up -d --build
+#
+# Expose port 5005 on your firewall, or put behind a reverse proxy (nginx/caddy)
+# with TLS for Microsoft Store / public clients.
+
+services:
+  offmessenger-server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5005:5005"
+    environment:
+      BIND: "0.0.0.0:5005"
+      DATA_DIR: "/data"
+      JWT_SECRET: "CHANGE-ME-TO-A-LONG-RANDOM-STRING-AT-LEAST-32-CHARS"
+      SEND_CODE_EXPOSE: "false"      # set to true only for local dev
+      RUST_LOG: "offmessenger_server=info,tower_http=info"
+    volumes:
+      - offmessenger-data:/data
+
+volumes:
+  offmessenger-data:

@@ -21,8 +21,10 @@ Thumbs.db
 .idea/
 
 # Tauri / Rust
+target/
 src-tauri/target/
 src-tauri/gen/
+Cargo.lock
 src-tauri/Cargo.lock
 
 # Env

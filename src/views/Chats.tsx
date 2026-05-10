@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { api } from "../lib/api";
+import { api, openChatSocket } from "../lib/api";
 import { useApp } from "../lib/store";
 import { IconSend } from "../components/Icons";
 import type { Chat, Message } from "../types";
@@ -13,24 +13,45 @@ export function Chats() {
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { api.listChats().then((cs) => { setChats(cs); if (cs.length && !activeId) setActiveId(cs[0].id); }); }, []);
-  useEffect(() => { if (!activeId) return; api.listMessages(activeId).then(setMessages); }, [activeId]);
-  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    api.listChats().then((cs) => {
+      setChats(cs);
+      if (cs.length && !activeId) setActiveId(cs[0].id);
+    }).catch(() => { /* surfaced via toast when we add one */ });
+  }, []);
+
+  useEffect(() => {
+    if (!activeId) return;
+    let cancelled = false;
+    api.listMessages(activeId).then((ms) => { if (!cancelled) setMessages(ms); }).catch(() => {});
+    const close = openChatSocket(activeId, (m) => {
+      setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+    });
+    return () => { cancelled = true; close(); };
+  }, [activeId]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (!activeId || !text.trim()) return;
-    const m = await api.sendMessage(activeId, text.trim());
-    setMessages((ms) => [...ms, m]);
-    setText("");
+    try {
+      await api.sendMessage(activeId, text.trim());
+      // WebSocket broadcast will deliver the message back; we just clear the input.
+      setText("");
+    } catch { /* silently fail for now */ }
   }
 
   async function newChat() {
     const title = prompt("Название чата");
     if (!title) return;
-    const c = await api.createChat(title);
-    setChats((cs) => [...cs, c]);
-    setActiveId(c.id);
+    try {
+      const c = await api.createChat(title);
+      setChats((cs) => [c, ...cs]);
+      setActiveId(c.id);
+    } catch { /* ignore */ }
   }
 
   return (
