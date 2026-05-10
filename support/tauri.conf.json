@@ -43,7 +43,7 @@
       "wix": { "language": ["en-US"] },
       "nsis": { "installMode": "currentUser" }
     },
-    "category": "BusinessTools",
+    "category": "Business",
     "shortDescription": "Moderation & role management console",
     "longDescription": "OffMessenger Support — companion app for staff: complaints queue, user search, role assignment."
   }
