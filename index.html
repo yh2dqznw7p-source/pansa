@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>manikuurr — маникюрный салон</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Навигация -->
+    <header class="header">
+        <nav class="nav container">
+            <a href="#home" class="logo">manikuurr<span>.</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home">Главная</a></li>
+                <li><a href="#about">О нас</a></li>
+                <li><a href="#services">Услуги</a></li>
+                <li><a href="#gallery">Галерея</a></li>
+                <li><a href="#masters">Мастера</a></li>
+                <li><a href="#contact">Контакты</a></li>
+            </ul>
+            <a href="#contact" class="btn btn-primary nav-btn">Записаться</a>
+            <button class="burger" id="burger" aria-label="меню">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero" id="home">
+        <div class="container hero-inner">
+            <div class="hero-text">
+                <span class="pretitle">Маникюрный салон премиум-класса</span>
+                <h1>Красивые ногти — <em>каждый день</em></h1>
+                <p>В <b>manikuurr</b> мы создаём идеальный маникюр, который подчеркнёт твою индивидуальность. Только проверенные материалы, стерильные инструменты и лучшие мастера города.</p>
+                <div class="hero-buttons">
+                    <a href="#contact" class="btn btn-primary">Записаться онлайн</a>
+                    <a href="#services" class="btn btn-ghost">Наши услуги</a>
+                </div>
+                <div class="hero-stats">
+                    <div><strong>8+</strong><span>лет опыта</span></div>
+                    <div><strong>5000+</strong><span>клиентов</span></div>
+                    <div><strong>4.9</strong><span>рейтинг</span></div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-circle"></div>
+                <div class="hero-card">
+                    <span class="emoji">💅</span>
+                    <p>Запись открыта</p>
+                    <small>на этой неделе</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- О нас -->
+    <section class="about" id="about">
+        <div class="container about-inner">
+            <div class="about-image">
+                <div class="about-img-box"></div>
+            </div>
+            <div class="about-text">
+                <span class="pretitle">О салоне</span>
+                <h2>Уют, стиль и профессионализм</h2>
+                <p>Мы — команда мастеров, влюблённых в своё дело. В <b>manikuurr</b> ты найдёшь идеальную атмосферу, чтобы отдохнуть и выйти с нами с красивыми ухоженными руками.</p>
+                <ul class="features">
+                    <li><span>✓</span> Стерилизация инструментов по стандарту</li>
+                    <li><span>✓</span> Гипоаллергенные материалы премиум-класса</li>
+                    <li><span>✓</span> Индивидуальный подход к каждому клиенту</li>
+                    <li><span>✓</span> Уютная и современная атмосфера</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Услуги -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-head">
+                <span class="pretitle">Прайс-лист</span>
+                <h2>Наши услуги</h2>
+                <p>Выбери то, что подходит именно тебе</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">💅</div>
+                    <h3>Классический маникюр</h3>
+                    <p>Аккуратная обработка кутикулы и ногтевой пластины.</p>
+                    <div class="service-footer">
+                        <span class="price">1 500 ₽</span>
+                        <span class="duration">60 мин</span>
+                    </div>
+                </div>
+                <div class="service-card featured">
+                    <div class="service-badge">Хит</div>
+                    <div class="service-icon">✨</div>
+                    <h3>Маникюр с гель-лаком</h3>
+                    <p>Стойкое покрытие до 3-х недель, огромный выбор оттенков.</p>
+                    <div class="service-footer">
+                        <span class="price">2 500 ₽</span>
+                        <span class="duration">90 мин</span>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🌸</div>
+                    <h3>Дизайн ногтей</h3>
+                    <p>Рисунки, втирки, стразы, френч и градиент.</p>
+                    <div class="service-footer">
+                        <span class="price">от 300 ₽</span>
+                        <span class="duration">+15 мин</span>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🦶</div>
+                    <h3>Педикюр</h3>
+                    <p>Комплексный уход за стопами и ногтями ног.</p>
+                    <div class="service-footer">
+                        <span class="price">2 200 ₽</span>
+                        <span class="duration">80 мин</span>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">💎</div>
+                    <h3>Наращивание ногтей</h3>
+                    <p>Моделирование любой формы и длины на гелевой основе.</p>
+                    <div class="service-footer">
+                        <span class="price">3 500 ₽</span>
+                        <span class="duration">150 мин</span>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🎁</div>
+                    <h3>Подарочный SPA-уход</h3>
+                    <p>Парафинотерапия, массаж рук и питательные маски.</p>
+                    <div class="service-footer">
+                        <span class="price">1 800 ₽</span>
+                        <span class="duration">45 мин</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Галерея -->
+    <section class="gallery" id="gallery">
+        <div class="container">
+            <div class="section-head">
+                <span class="pretitle">Портфолио</span>
+                <h2>Работы наших мастеров</h2>
+                <p>Вдохновись и выбери свой стиль</p>
+            </div>
+            <div class="gallery-grid">
+                <div class="gallery-item g1"><span>Френч</span></div>
+                <div class="gallery-item g2"><span>Nude</span></div>
+                <div class="gallery-item g3"><span>Градиент</span></div>
+                <div class="gallery-item g4"><span>Стразы</span></div>
+                <div class="gallery-item g5"><span>Рисунок</span></div>
+                <div class="gallery-item g6"><span>Матовый</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Мастера -->
+    <section class="masters" id="masters">
+        <div class="container">
+            <div class="section-head">
+                <span class="pretitle">Команда</span>
+                <h2>Наши мастера</h2>
+                <p>Профессионалы, которые любят свою работу</p>
+            </div>
+            <div class="masters-grid">
+                <div class="master-card">
+                    <div class="master-avatar" style="background: linear-gradient(135deg,#ffb6c8,#ff8fab);">А</div>
+                    <h3>Анна</h3>
+                    <span>Топ-мастер · 7 лет опыта</span>
+                    <p>Специалист по сложному дизайну и росписи.</p>
+                </div>
+                <div class="master-card">
+                    <div class="master-avatar" style="background: linear-gradient(135deg,#f3c6ff,#d48bff);">М</div>
+                    <h3>Мария</h3>
+                    <span>Мастер · 5 лет опыта</span>
+                    <p>Эксперт по гель-лаку и аккуратному френчу.</p>
+                </div>
+                <div class="master-card">
+                    <div class="master-avatar" style="background: linear-gradient(135deg,#ffd4a1,#ff9f68);">Е</div>
+                    <h3>Елена</h3>
+                    <span>Педикюр-мастер · 6 лет опыта</span>
+                    <p>Медицинский и SPA-педикюр.</p>
+                </div>
+                <div class="master-card">
+                    <div class="master-avatar" style="background: linear-gradient(135deg,#c4e7ff,#87c6ff);">К</div>
+                    <h3>Ксения</h3>
+                    <span>Мастер · 4 года опыта</span>
+                    <p>Наращивание и укрепление ногтей.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Отзывы -->
+    <section class="reviews">
+        <div class="container">
+            <div class="section-head">
+                <span class="pretitle">Отзывы</span>
+                <h2>Что говорят клиенты</h2>
+            </div>
+            <div class="reviews-grid">
+                <div class="review-card">
+                    <div class="stars">★★★★★</div>
+                    <p>«Хожу в manikuurr уже больше года. Всегда идеальный результат и очень приятная атмосфера!»</p>
+                    <strong>— Ольга К.</strong>
+                </div>
+                <div class="review-card">
+                    <div class="stars">★★★★★</div>
+                    <p>«Анна — волшебница! Такой дизайн сделала, что подруги заваливают комплиментами.»</p>
+                    <strong>— Дарья М.</strong>
+                </div>
+                <div class="review-card">
+                    <div class="stars">★★★★★</div>
+                    <p>«Чисто, аккуратно, стерильно. Цены адекватные, покрытие держится минимум 3 недели.»</p>
+                    <strong>— Юлия П.</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Контакты / Форма -->
+    <section class="contact" id="contact">
+        <div class="container contact-inner">
+            <div class="contact-info">
+                <span class="pretitle">Записаться</span>
+                <h2>Готова к идеальному маникюру?</h2>
+                <p>Оставь заявку — мы перезвоним в течение 10 минут и подберём удобное время.</p>
+                <ul class="contact-list">
+                    <li><strong>📍 Адрес:</strong> ул. Пушкина, 10, Москва</li>
+                    <li><strong>📞 Телефон:</strong> +7 (999) 123-45-67</li>
+                    <li><strong>🕐 Часы работы:</strong> пн–вс, 10:00 – 21:00</li>
+                    <li><strong>📧 Email:</strong> hello@manikuurr.ru</li>
+                </ul>
+            </div>
+            <form class="contact-form" id="bookForm">
+                <h3>Онлайн-запись</h3>
+                <label>
+                    Имя
+                    <input type="text" name="name" placeholder="Анна" required>
+                </label>
+                <label>
+                    Телефон
+                    <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required>
+                </label>
+                <label>
+                    Услуга
+                    <select name="service" required>
+                        <option value="">Выберите услугу</option>
+                        <option>Классический маникюр</option>
+                        <option>Маникюр с гель-лаком</option>
+                        <option>Дизайн ногтей</option>
+                        <option>Педикюр</option>
+                        <option>Наращивание ногтей</option>
+                        <option>SPA-уход</option>
+                    </select>
+                </label>
+                <label>
+                    Дата
+                    <input type="date" name="date" required>
+                </label>
+                <button type="submit" class="btn btn-primary btn-wide">Записаться</button>
+                <p class="form-note" id="formNote"></p>
+            </form>
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div>
+                <a href="#home" class="logo">manikuurr<span>.</span></a>
+                <p>Твой любимый маникюрный салон.</p>
+            </div>
+            <div>
+                <h4>Меню</h4>
+                <ul>
+                    <li><a href="#about">О нас</a></li>
+                    <li><a href="#services">Услуги</a></li>
+                    <li><a href="#masters">Мастера</a></li>
+                    <li><a href="#contact">Контакты</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Соцсети</h4>
+                <ul>
+                    <li><a href="#">Instagram</a></li>
+                    <li><a href="#">TikTok</a></li>
+                    <li><a href="#">Telegram</a></li>
+                    <li><a href="#">VK</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2026 manikuurr. Все права защищены.</div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
