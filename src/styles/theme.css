@@ -1,0 +1,116 @@
+/* ==========================================================================
+   OffMessenger — theme tokens
+   Light / Dark / System themes. Toggled by [data-theme] on <html>.
+   ========================================================================== */
+
+:root {
+  /* Motion */
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 180ms;
+  --dur-med: 320ms;
+  --dur-slow: 520ms;
+
+  /* Radii */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  /* Typography */
+  --font-ui: "Inter", "Segoe UI Variable", "Segoe UI", -apple-system,
+    BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------- Light ---------- */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-0: #eef2fb;
+  --bg-1: #f7f9ff;
+  --bg-grad-a: #dfe8fb;
+  --bg-grad-b: #f5e6ff;
+  --bg-grad-c: #e0f2ff;
+
+  --fg: #0b1220;
+  --fg-muted: #4a5568;
+  --fg-subtle: #7a8597;
+
+  --stroke: rgba(15, 23, 42, 0.08);
+  --stroke-strong: rgba(15, 23, 42, 0.16);
+
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-strong: rgba(255, 255, 255, 0.65);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-shadow: rgba(15, 23, 42, 0.12);
+
+  --accent: #5b7cfa;
+  --accent-2: #8b5bfa;
+  --danger: #e5484d;
+  --success: #2fb56b;
+  --warning: #f0a726;
+}
+
+/* ---------- Dark ---------- */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-0: #0a0d16;
+  --bg-1: #10141f;
+  --bg-grad-a: #1a1f3a;
+  --bg-grad-b: #3a1b4a;
+  --bg-grad-c: #0c2a3e;
+
+  --fg: #eef2fb;
+  --fg-muted: #b8c1d4;
+  --fg-subtle: #8591a8;
+
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(255, 255, 255, 0.18);
+
+  --glass-bg: rgba(20, 24, 40, 0.45);
+  --glass-bg-strong: rgba(20, 24, 40, 0.65);
+  --glass-highlight: rgba(255, 255, 255, 0.14);
+  --glass-shadow: rgba(0, 0, 0, 0.45);
+
+  --accent: #7a94ff;
+  --accent-2: #b98bff;
+  --danger: #ff6b6f;
+  --success: #4ccf86;
+  --warning: #ffc257;
+}
+
+/* System prefers-color-scheme fallback */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    color-scheme: dark;
+    --bg-0: #0a0d16;
+    --bg-1: #10141f;
+    --bg-grad-a: #1a1f3a;
+    --bg-grad-b: #3a1b4a;
+    --bg-grad-c: #0c2a3e;
+    --fg: #eef2fb;
+    --fg-muted: #b8c1d4;
+    --fg-subtle: #8591a8;
+    --stroke: rgba(255, 255, 255, 0.08);
+    --stroke-strong: rgba(255, 255, 255, 0.18);
+    --glass-bg: rgba(20, 24, 40, 0.45);
+    --glass-bg-strong: rgba(20, 24, 40, 0.65);
+    --glass-highlight: rgba(255, 255, 255, 0.14);
+    --glass-shadow: rgba(0, 0, 0, 0.45);
+    --accent: #7a94ff;
+    --accent-2: #b98bff;
+  }
+}

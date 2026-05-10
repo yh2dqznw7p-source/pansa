@@ -1,0 +1,243 @@
+/* ==========================================================================
+   Liquid Glass surface
+   Implementation: layered backdrop-filter (blur + saturate + brightness)
+   + subtle SVG displacement for "liquid" refraction, + inner highlight ring.
+   Works in modern Edge/WebView2 (Chromium 110+) used by Tauri on Windows.
+   ========================================================================== */
+
+.lg-surface {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass-bg);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.05);
+  box-shadow:
+    0 1px 0 0 var(--glass-highlight) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.04) inset,
+    0 24px 48px -24px var(--glass-shadow),
+    0 2px 8px -2px var(--glass-shadow);
+  transition: background var(--dur-med) var(--ease-smooth),
+    border-color var(--dur-med) var(--ease-smooth),
+    box-shadow var(--dur-med) var(--ease-smooth);
+}
+
+/* Stronger variant for dialogs / sheets */
+.lg-surface--strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.08);
+}
+
+/* Liquid refraction: apply to a child overlay so content stays crisp */
+.lg-refract::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  filter: url(#lg-displace);
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background: radial-gradient(
+      120% 80% at 20% 10%,
+      rgba(255, 255, 255, 0.55),
+      transparent 55%
+    ),
+    radial-gradient(
+      100% 70% at 80% 90%,
+      rgba(120, 140, 255, 0.35),
+      transparent 60%
+    );
+}
+
+/* Specular highlight — the "wet" top edge */
+.lg-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--glass-highlight) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  opacity: 0.45;
+  mix-blend-mode: overlay;
+}
+
+/* Button surfaces */
+.lg-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--stroke);
+  background: var(--glass-bg);
+  color: var(--fg);
+  font: 500 14px/1 var(--font-ui);
+  cursor: pointer;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow:
+    0 1px 0 0 var(--glass-highlight) inset,
+    0 8px 24px -12px var(--glass-shadow);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background var(--dur-fast) var(--ease-smooth),
+    border-color var(--dur-fast) var(--ease-smooth),
+    box-shadow var(--dur-fast) var(--ease-smooth);
+}
+
+.lg-button:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--stroke-strong);
+  transform: translateY(-1px);
+}
+
+.lg-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.lg-button--primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+.lg-button--primary:hover {
+  filter: brightness(1.08);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+}
+
+.lg-button--danger {
+  background: linear-gradient(135deg, #ff4d6b 0%, #e5484d 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+.lg-button--ghost {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Inputs */
+.lg-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke);
+  background: var(--glass-bg);
+  color: var(--fg);
+  font: 400 14px/1.4 var(--font-ui);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  outline: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-smooth),
+    background var(--dur-fast) var(--ease-smooth),
+    box-shadow var(--dur-fast) var(--ease-smooth);
+}
+
+.lg-input::placeholder { color: var(--fg-subtle); }
+
+.lg-input:focus {
+  border-color: var(--accent);
+  background: var(--glass-bg-strong);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.lg-input--error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+/* Chip */
+.lg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--stroke);
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  font: 500 12px/1 var(--font-ui);
+  color: var(--fg-muted);
+}
+
+/* Skeleton shimmer (for plausibility on empty lists) */
+.lg-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--glass-bg) 0%,
+    var(--glass-bg-strong) 50%,
+    var(--glass-bg) 100%
+  );
+  background-size: 200% 100%;
+  animation: lg-shimmer 1.6s linear infinite;
+  border-radius: var(--r-sm);
+}
+
+@keyframes lg-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* Ambient animated background orbs */
+.lg-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 40% at 10% 10%, var(--bg-grad-a), transparent 70%),
+    radial-gradient(50% 40% at 90% 20%, var(--bg-grad-b), transparent 70%),
+    radial-gradient(60% 60% at 50% 100%, var(--bg-grad-c), transparent 70%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1));
+}
+
+.lg-ambient::before,
+.lg-ambient::after {
+  content: "";
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px) saturate(140%);
+  opacity: 0.55;
+  animation: lg-float 24s var(--ease-smooth) infinite alternate;
+}
+
+.lg-ambient::before {
+  top: -20vmax;
+  left: -15vmax;
+  background: radial-gradient(circle, var(--accent), transparent 60%);
+}
+
+.lg-ambient::after {
+  bottom: -20vmax;
+  right: -15vmax;
+  background: radial-gradient(circle, var(--accent-2), transparent 60%);
+  animation-delay: -8s;
+}
+
+@keyframes lg-float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(6vmax, -4vmax) scale(1.08); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .lg-ambient::before,
+  .lg-ambient::after { animation: none; }
+  .lg-skeleton { animation: none; }
+  * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+}
