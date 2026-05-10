@@ -13,6 +13,78 @@ function Toggle({ checked, onToggle }: { checked: boolean; onToggle: () => void 
   );
 }
 
+type UsernameState = "idle" | "busy" | "ok" | "taken" | "invalid";
+
+function UsernameField() {
+  const { user, setUser } = useApp();
+  const [value, setValue] = useState(user?.username ?? "");
+  const [state, setState] = useState<UsernameState>("idle");
+  const [msg, setMsg] = useState<string>("");
+
+  useEffect(() => {
+    setValue(user?.username ?? "");
+  }, [user?.username]);
+
+  function validate(v: string): string | null {
+    if (v.length < 3 || v.length > 32) return "длина 3..32 символа";
+    if (!/^[a-zA-Z0-9_]+$/.test(v)) return "только латиница, цифры и _";
+    return null;
+  }
+
+  async function save() {
+    const v = value.trim().replace(/^@/, "");
+    const problem = validate(v);
+    if (problem) { setState("invalid"); setMsg(problem); return; }
+    setState("busy"); setMsg("");
+    try {
+      const u = await api.setUsername(v);
+      setUser(u);
+      setState("ok");
+      setMsg("сохранено");
+    } catch (e: any) {
+      const m = (e?.message ?? "").toLowerCase();
+      if (m.includes("taken") || m.includes("conflict")) {
+        setState("taken"); setMsg("уже занят");
+      } else {
+        setState("invalid"); setMsg(e?.message ?? "ошибка");
+      }
+    }
+  }
+
+  const pillClass = state === "ok" ? "username-state--ok"
+                  : state === "busy" ? "username-state--busy"
+                  : (state === "taken" || state === "invalid") ? "username-state--taken"
+                  : "";
+
+  return (
+    <>
+      <div className="row" style={{ gap: 10 }}>
+        <span className="subtle" style={{ fontSize: 14, padding: "0 4px 0 8px" }}>@</span>
+        <input
+          className="input"
+          value={value}
+          onChange={(e) => { setValue(e.target.value.replace(/\s+/g, "")); setState("idle"); setMsg(""); }}
+          placeholder="username"
+          spellCheck={false}
+          style={{ paddingLeft: 6 }}
+        />
+        <button className="btn btn--primary" onClick={save} disabled={state === "busy"}>
+          {state === "busy" ? "…" : "Сохранить"}
+        </button>
+      </div>
+      {state !== "idle" && (
+        <div className={`username-state ${pillClass}`} style={{ marginTop: 8 }}>
+          {state === "ok" && "✓"}{state === "taken" && "✗"}{state === "invalid" && "✗"}{state === "busy" && "…"} {msg}
+        </div>
+      )}
+      <div className="subtle" style={{ fontSize: 12, marginTop: 10, lineHeight: 1.45 }}>
+        Юзернейм — уникальное имя для поиска. По нему вас смогут найти и написать.
+        Разрешены латинские буквы, цифры и <code>_</code>.
+      </div>
+    </>
+  );
+}
+
 export function Settings() {
   const s = useApp();
   const themes: { value: Theme; label: string }[] = [
@@ -61,17 +133,27 @@ export function Settings() {
           <div className="pane__title pane__title--brand">Настройки</div>
         </div>
 
-        {/* Profile */}
         {s.user && (
           <div className="lg--strong card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <Avatar seed={s.user.id} name={s.user.nickname} size={64} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="h2">{s.user.nickname}</div>
-              <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{s.user.email}</div>
+              <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
+                {s.user.username ? `@${s.user.username}` : s.user.email}
+              </div>
             </div>
             <span className={`role-badge role-${s.user.role}`}>{s.user.role}</span>
           </div>
         )}
+
+        {/* Username */}
+        <div className="lg--strong card">
+          <div className="row" style={{ marginBottom: 10 }}>
+            <IconSparkle size={18} className="muted" />
+            <h3 className="card__title" style={{ margin: 0 }}>Юзернейм</h3>
+          </div>
+          <UsernameField />
+        </div>
 
         {/* Server */}
         <div className="lg--strong card">
@@ -80,7 +162,7 @@ export function Settings() {
             <h3 className="card__title" style={{ margin: 0 }}>Сервер</h3>
           </div>
           <div className="subtle" style={{ fontSize: 12, marginBottom: 12 }}>
-            Адрес вашего OffMessenger-сервера. Локально: <code>http://127.0.0.1:5005</code>. На проде: <code>https://api.ваш-домен</code>.
+            Локально: <code>http://127.0.0.1:5005</code>. На проде: <code>https://api.ваш-домен</code>.
           </div>
           <div className="row" style={{ gap: 8 }}>
             <input className="input" value={server} onChange={(e) => setServer(e.target.value)} placeholder="http://127.0.0.1:5005" spellCheck={false} />
@@ -139,22 +221,19 @@ export function Settings() {
           <div className="row-between">
             <div>
               <div style={{ fontWeight: 500 }}>Отчёты о прочтении</div>
-              <div className="subtle" style={{ fontSize: 12, marginTop: 2 }}>Собеседник видит, что вы прочли сообщение</div>
+              <div className="subtle" style={{ fontSize: 12, marginTop: 2 }}>Собеседник видит, что вы прочли</div>
             </div>
             <Toggle checked={s.readReceipts} onToggle={() => s.toggle("readReceipts")} />
           </div>
           <div className="row-between">
-            <div style={{ fontWeight: 500 }}>Показывать время последнего визита</div>
+            <div style={{ fontWeight: 500 }}>Время последнего визита</div>
             <Toggle checked={s.lastSeen} onToggle={() => s.toggle("lastSeen")} />
           </div>
         </div>
 
         {/* Chats */}
         <div className="lg--strong card">
-          <div className="row" style={{ marginBottom: 10 }}>
-            <IconSparkle size={18} className="muted" />
-            <h3 className="card__title" style={{ margin: 0 }}>Чаты</h3>
-          </div>
+          <h3 className="card__title">Чаты</h3>
           <div className="row-between">
             <div>
               <div style={{ fontWeight: 500 }}>Компактный режим</div>

@@ -43,7 +43,10 @@ pub fn build(state: AppState) -> Router {
         .route("/api/auth/register", post(register))
         .route("/api/auth/login", post(login))
         .route("/api/me", get(me))
+        .route("/api/me/username", post(set_username))
         .route("/api/me/top-up", post(top_up))
+        .route("/api/users/search", get(search_users))
+        .route("/api/dm/open", post(open_dm))
         .route("/api/chats", get(list_chats).post(create_chat))
         .route("/api/chats/:id/messages", get(list_messages).post(send_message))
         .route("/api/chats/:id/ws", get(chat_ws))
@@ -160,11 +163,41 @@ async fn top_up(
     }
 }
 
+/// Validates a username and saves it on the current user.
+/// Rules: 3..=32 chars, `[a-zA-Z0-9_]+`, case-insensitive uniqueness.
+async fn set_username(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<SetUsernameReq>,
+) -> Response {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    let u = req.username.trim().trim_start_matches('@').to_string();
+
+    if u.len() < 3 || u.len() > 32 {
+        return err(StatusCode::BAD_REQUEST, "username must be 3..32 chars");
+    }
+    if !u.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return err(StatusCode::BAD_REQUEST, "username may contain only a-z, 0-9, _");
+    }
+    // Case-insensitive uniqueness check.
+    match db::get_user_by_username(&state.db, &u) {
+        Ok(Some(existing)) if existing.id != claims.sub => {
+            return err(StatusCode::CONFLICT, "username is taken");
+        }
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+        _ => {}
+    }
+    match db::set_username(&state.db, &claims.sub, &u) {
+        Ok(user) => Json(user).into_response(),
+        Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+}
+
 // --- Chats & messages ---------------------------------------------------
 
 async fn list_chats(State(state): State<AppState>, headers: HeaderMap) -> Response {
-    if let Err(r) = require_auth(&state, &headers) { return r; }
-    match db::list_chats(&state.db) {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    match db::list_chats_for(&state.db, &claims.sub) {
         Ok(cs) => Json(cs).into_response(),
         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
     }
@@ -180,20 +213,52 @@ async fn create_chat(
     if title.is_empty() || title.len() > 120 {
         return err(StatusCode::BAD_REQUEST, "invalid title");
     }
-    match db::create_chat(&state.db, &claims.sub, title) {
+    match db::create_group_chat(&state.db, &claims.sub, title) {
         Ok(c) => Json(c).into_response(),
         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
     }
 }
 
-async fn list_messages(
+async fn open_dm(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Path(chat_id): Path<String>,
+    Json(req): Json<OpenDmReq>,
+) -> Response {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    let uname = req.username.trim().trim_start_matches('@');
+    if uname.is_empty() {
+        return err(StatusCode::BAD_REQUEST, "empty username");
+    }
+    let peer = match db::get_user_by_username(&state.db, uname) {
+        Ok(Some(u)) => u,
+        Ok(None) => return err(StatusCode::NOT_FOUND, "user not found"),
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    };
+    if peer.id == claims.sub {
+        return err(StatusCode::BAD_REQUEST, "cannot open DM with yourself");
+    }
+    match db::get_or_create_dm(&state.db, &claims.sub, &peer.id) {
+        Ok(mut chat) => {
+            chat.title = peer.nickname.clone();
+            chat.peer = Some(peer);
+            Json(chat).into_response()
+        }
+        Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+}
+
+async fn search_users(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(q): Query<SearchQuery>,
 ) -> Response {
     if let Err(r) = require_auth(&state, &headers) { return r; }
-    match db::list_messages(&state.db, &chat_id, 500) {
-        Ok(ms) => Json(ms).into_response(),
+    let query = q.q.trim();
+    if query.is_empty() {
+        return Json(Vec::<crate::models::User>::new()).into_response();
+    }
+    match db::search_users(&state.db, query, 30) {
+        Ok(us) => Json(us).into_response(),
         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
     }
 }
@@ -209,12 +274,15 @@ async fn send_message(
     if text.is_empty() || text.len() > MAX_TEXT_LEN {
         return err(StatusCode::BAD_REQUEST, "invalid text length");
     }
+    match db::is_member(&state.db, &chat_id, &claims.sub) {
+        Ok(true) => {}
+        Ok(false) => return err(StatusCode::FORBIDDEN, "not a chat member"),
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
     let user = match db::get_user(&state.db, &claims.sub) {
         Ok(Some(u)) => u,
         _ => return err(StatusCode::UNAUTHORIZED, "user not found"),
     };
-    // The `chat_id` field in the body is informational; the path param is the
-    // source of truth. We intentionally ignore any mismatch.
     let _ = req.chat_id;
     let msg = match db::insert_message(&state.db, &chat_id, &user.id, &user.nickname, text) {
         Ok(m) => m,
@@ -224,11 +292,33 @@ async fn send_message(
     Json(msg).into_response()
 }
 
+async fn list_messages(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(chat_id): Path<String>,
+) -> Response {
+    let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
+    match db::is_member(&state.db, &chat_id, &claims.sub) {
+        Ok(true) => {}
+        Ok(false) => return err(StatusCode::FORBIDDEN, "not a chat member"),
+        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+    match db::list_messages(&state.db, &chat_id, 500) {
+        Ok(ms) => Json(ms).into_response(),
+        Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+    }
+}
+
 // --- WebSocket for live chat messages -----------------------------------
 
 #[derive(Deserialize)]
 pub struct WsQuery {
     pub token: String,
+}
+
+#[derive(Deserialize)]
+pub struct SearchQuery {
+    pub q: String,
 }
 
 async fn chat_ws(
@@ -237,8 +327,13 @@ async fn chat_ws(
     Query(q): Query<WsQuery>,
     ws: WebSocketUpgrade,
 ) -> Response {
-    if verify_token(&state.jwt_secret, &q.token).is_err() {
-        return err(StatusCode::UNAUTHORIZED, "invalid token");
+    let claims = match verify_token(&state.jwt_secret, &q.token) {
+        Ok(c) => c,
+        Err(_) => return err(StatusCode::UNAUTHORIZED, "invalid token"),
+    };
+    match db::is_member(&state.db, &chat_id, &claims.sub) {
+        Ok(true) => {}
+        _ => return err(StatusCode::FORBIDDEN, "not a chat member"),
     }
     let rx = state.sender_for(&chat_id).subscribe();
     ws.on_upgrade(move |socket| crate::ws::run_ws(socket, rx))

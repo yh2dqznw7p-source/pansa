@@ -3,7 +3,7 @@ import type { User } from "../types";
 import { api } from "./api";
 
 export type Theme = "light" | "dark" | "system";
-export type Route = "login" | "register" | "chats" | "discover" | "settings";
+export type Route = "login" | "register" | "chats" | "search" | "settings";
 
 interface AppState {
   user: User | null;

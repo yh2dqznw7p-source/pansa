@@ -149,6 +149,13 @@ export const api = {
   // Balance
   topUp: (amount: number) => request<User>("POST", "/api/me/top-up", { amount }),
 
+  // Username (unique handle for DM lookups)
+  setUsername: (username: string) => request<User>("POST", "/api/me/username", { username }),
+
+  // Search & DM
+  searchUsers: (q: string) => request<User[]>("GET", `/api/users/search?q=${encodeURIComponent(q)}`),
+  openDm: (username: string) => request<Chat>("POST", "/api/dm/open", { username }),
+
   // Chats
   listChats: () => request<Chat[]>("GET", "/api/chats"),
   createChat: (title: string) => request<Chat>("POST", "/api/chats", { title }),

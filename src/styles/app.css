@@ -44,15 +44,73 @@ button, input, textarea, a, .no-drag {
 .scroll::-webkit-scrollbar-thumb { background: var(--glass-border-strong); border-radius: 999px; }
 
 /* ===========================================================
-   App shell — Messenger: sidebar | chat-list | chat-view
-   =========================================================== */
+   App shell — top bar + rail + center + right
+   ===========================================================
+
+   Layout:
+   ┌──────────────────────────────────────────────────────────┐
+   │ topbar (OffMessenger ............ balance · + )          │
+   ├───┬──────────────┬───────────────────────────────────────┤
+   │   │              │                                       │
+   │ R │  chat-list   │   conversation / settings / search    │
+   │   │              │                                       │
+   │   │              │                                       │
+   │ O │              │                                       │
+   └───┴──────────────┴───────────────────────────────────────┘
+
+   R = rail with search / chats icons on top, gear + brand bottom
+   O = user avatar at very bottom of rail
+*/
 
 .shell {
   display: grid;
-  grid-template-columns: 82px 340px 1fr;
-  grid-template-rows: 100vh;
+  grid-template-rows: 60px 1fr;
   height: 100vh;
   width: 100vw;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-fill);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar__logo {
+  width: 36px; height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-warm));
+  display: grid; place-items: center;
+  color: white; font-weight: 900; font-size: 17px;
+  box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.topbar__name {
+  font: 700 17px/1 var(--font-ui);
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, var(--fg) 10%, var(--accent) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.topbar__right { display: flex; align-items: center; gap: 10px; }
+
+.shell__body {
+  display: grid;
+  grid-template-columns: 82px 340px 1fr;
+  min-height: 0;
   gap: 12px;
   padding: 12px;
 }
@@ -63,23 +121,9 @@ button, input, textarea, a, .no-drag {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 18px 10px;
-  gap: 12px;
+  padding: 14px 10px;
+  gap: 10px;
   border-radius: var(--r-lg);
-}
-
-.rail__logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-warm));
-  box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent);
-  display: grid;
-  place-items: center;
-  color: white;
-  font-weight: 900;
-  font-size: 20px;
-  margin-bottom: 8px;
 }
 
 .rail__btn {
@@ -112,6 +156,16 @@ button, input, textarea, a, .no-drag {
 }
 
 .rail__spacer { flex: 1; }
+
+.rail__brand {
+  font: 800 9px/1 var(--font-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  text-align: center;
+  max-width: 60px;
+  margin-top: 2px;
+}
 
 .rail__avatar {
   width: 44px;
@@ -314,6 +368,7 @@ button, input, textarea, a, .no-drag {
   margin-left: auto;
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 /* Messages */
@@ -815,3 +870,53 @@ button, input, textarea, a, .no-drag {
 .h1 { font: 800 28px/1.1 var(--font-ui); letter-spacing: -0.015em; }
 .h2 { font: 700 20px/1.2 var(--font-ui); }
 .h3 { font: 700 15px/1.25 var(--font-ui); }
+
+/* ===========================================================
+   Search view — results list
+   =========================================================== */
+
+.search-hits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 12px;
+  overflow-y: auto;
+}
+
+.search-hit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-smooth),
+    border-color var(--dur-fast) var(--ease-smooth),
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+.search-hit:hover {
+  background: var(--glass-fill);
+  border-color: var(--glass-border);
+  transform: translateX(2px);
+}
+
+.search-hit__body { flex: 1; min-width: 0; }
+.search-hit__name { font: 700 14px/1.2 var(--font-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-hit__handle { font: 500 12px/1.2 var(--font-ui); color: var(--fg-subtle); margin-top: 2px; }
+
+.username-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px/1 var(--font-ui);
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill);
+}
+.username-state--ok    { color: var(--success); }
+.username-state--busy  { color: var(--warning); }
+.username-state--taken { color: var(--danger); }

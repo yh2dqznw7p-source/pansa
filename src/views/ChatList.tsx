@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Avatar } from "../components/Avatar";
-import { IconPlus, IconSearch } from "../components/Icons";
+import { IconSearch } from "../components/Icons";
 import type { Chat } from "../types";
 
 function timeShort(ts: number): string {
@@ -15,8 +15,17 @@ function timeShort(ts: number): string {
     : d.toLocaleDateString("ru", { day: "2-digit", month: "2-digit" });
 }
 
+function chatDisplayName(c: Chat): string {
+  if (c.is_dm && c.peer) return c.peer.nickname;
+  return c.title || "Без названия";
+}
+
+function chatAvatarSeed(c: Chat): string {
+  return c.is_dm && c.peer ? c.peer.id : c.id;
+}
+
 export function ChatList() {
-  const { activeChatId, setActiveChat } = useApp();
+  const { activeChatId, setActiveChat, setRoute } = useApp();
   const [chats, setChats] = useState<Chat[]>([]);
   const [query, setQuery] = useState("");
 
@@ -24,30 +33,23 @@ export function ChatList() {
     try {
       const cs = await api.listChats();
       setChats(cs);
-      if (!activeChatId && cs.length) setActiveChat(cs[0].id);
     } catch {}
   }
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 8000);
+    const t = setInterval(load, 5000);
     return () => clearInterval(t);
   }, []);
-
-  async function create() {
-    const title = prompt("Название нового чата");
-    if (!title?.trim()) return;
-    try {
-      const c = await api.createChat(title.trim());
-      setChats((cs) => [c, ...cs]);
-      setActiveChat(c.id);
-    } catch {}
-  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return chats;
-    return chats.filter((c) => c.title.toLowerCase().includes(q));
+    return chats.filter((c) => {
+      const name = chatDisplayName(c).toLowerCase();
+      const handle = c.peer?.username?.toLowerCase() ?? "";
+      return name.includes(q) || handle.includes(q);
+    });
   }, [chats, query]);
 
   return (
@@ -55,8 +57,13 @@ export function ChatList() {
       <div className="pane__head">
         <div className="pane__title pane__title--brand">Чаты</div>
         <div style={{ marginLeft: "auto" }}>
-          <button className="btn btn--icon btn--primary" onClick={create} aria-label="Новый чат">
-            <IconPlus size={18} />
+          <button
+            className="btn btn--icon btn--primary"
+            onClick={() => setRoute("search")}
+            aria-label="Найти и написать"
+            title="Найти пользователя"
+          >
+            <IconSearch size={18} />
           </button>
         </div>
       </div>
@@ -82,21 +89,36 @@ export function ChatList() {
             transition={{ delay: Math.min(i * 0.02, 0.2), duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ x: 2 }}
           >
-            <Avatar seed={c.id} name={c.title} size={44} />
+            <Avatar seed={chatAvatarSeed(c)} name={chatDisplayName(c)} size={44} />
             <div className="chat-row__body">
               <div className="chat-row__top">
-                <div className="chat-row__title">{c.title}</div>
+                <div className="chat-row__title">
+                  {chatDisplayName(c)}
+                  {c.peer?.username && (
+                    <span className="subtle" style={{ fontWeight: 400, marginLeft: 6, fontSize: 12 }}>
+                      @{c.peer.username}
+                    </span>
+                  )}
+                </div>
                 <div className="chat-row__time">{timeShort(c.last_message_at)}</div>
               </div>
               <div className="chat-row__preview">
-                {c.last_message ?? "Нет сообщений"}
+                {c.last_message ?? (c.is_dm ? "Откройте, чтобы написать" : "Нет сообщений")}
               </div>
             </div>
           </motion.div>
         ))}
+
         {filtered.length === 0 && (
-          <div className="center muted" style={{ padding: 40, fontSize: 13 }}>
-            {query ? "Ничего не найдено" : "Список пуст — создайте первый чат"}
+          <div className="center muted" style={{ padding: 40, fontSize: 13, textAlign: "center" }}>
+            {query ? "Ничего не найдено" : (
+              <>
+                <div>Чатов нет</div>
+                <div className="subtle" style={{ marginTop: 6, fontSize: 12 }}>
+                  Нажмите <b>🔍</b> вверху и найдите собеседника по юзернейму
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

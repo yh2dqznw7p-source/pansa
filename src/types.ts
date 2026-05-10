@@ -10,6 +10,7 @@ export type Role =
 export interface User {
   id: string;
   email: string;
+  username?: string | null;
   nickname: string;
   balance: number;
   role: Role;
@@ -26,8 +27,10 @@ export interface Chat {
   id: string;
   title: string;
   owner_id: string;
+  is_dm: boolean;
   created_at: number;
   last_message_at: number;
+  peer?: User | null;
   last_message?: string | null;
 }
 

@@ -4,7 +4,6 @@ import { api, openChatSocket } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Avatar } from "../components/Avatar";
 import { IconDots, IconPhone, IconSend, IconVideo } from "../components/Icons";
-import { TopBar } from "../components/TopBar";
 import type { Chat, Message } from "../types";
 
 function fmtTime(ts: number): string {
@@ -69,26 +68,29 @@ export function Conversation() {
         <div style={{ textAlign: "center", maxWidth: 360 }}>
           <div className="h2" style={{ marginBottom: 8 }}>Выберите чат</div>
           <div className="muted" style={{ fontSize: 13 }}>
-            Сообщения появятся здесь. Или создайте новый чат слева.
+            Найдите собеседника по юзернейму на вкладке «Поиск» — чат откроется автоматически.
           </div>
         </div>
       </div>
     );
   }
 
+  const title = chat.is_dm && chat.peer ? chat.peer.nickname : chat.title;
+  const subtitle = chat.is_dm && chat.peer?.username ? `@${chat.peer.username}` : "в сети";
+  const avatarSeed = chat.is_dm && chat.peer ? chat.peer.id : chat.id;
+
   return (
     <div className="pane lg conv">
       <div className="conv__head">
-        <Avatar seed={chat.id} name={chat.title} size={44} />
+        <Avatar seed={avatarSeed} name={title} size={44} />
         <div>
-          <div className="conv__head-title">{chat.title}</div>
-          <div className="conv__head-sub">в сети</div>
+          <div className="conv__head-title">{title}</div>
+          <div className="conv__head-sub">{subtitle}</div>
         </div>
         <div className="conv__head-actions">
           <button className="btn btn--ghost btn--icon" title="Звонок"><IconPhone size={18} /></button>
           <button className="btn btn--ghost btn--icon" title="Видео"><IconVideo size={18} /></button>
           <button className="btn btn--ghost btn--icon" title="Ещё"><IconDots size={18} /></button>
-          <TopBar />
         </div>
       </div>
 

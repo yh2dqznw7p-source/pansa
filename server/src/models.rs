@@ -50,6 +50,8 @@ impl Role {
 pub struct User {
     pub id: String,
     pub email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
     pub nickname: String,
     pub balance: i64,
     pub role: Role,
@@ -61,8 +63,11 @@ pub struct Chat {
     pub id: String,
     pub title: String,
     pub owner_id: String,
+    pub is_dm: bool,
     pub created_at: i64,
     pub last_message_at: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub peer: Option<User>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -122,6 +127,16 @@ pub struct SendMessageReq {
 #[derive(Deserialize)]
 pub struct CreateChatReq {
     pub title: String,
+}
+
+#[derive(Deserialize)]
+pub struct OpenDmReq {
+    pub username: String,
+}
+
+#[derive(Deserialize)]
+pub struct SetUsernameReq {
+    pub username: String,
 }
 
 #[derive(Deserialize)]
