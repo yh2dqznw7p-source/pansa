@@ -1,89 +1,121 @@
+/* ============================================================
+   OffMessenger — deep liquid-glass design tokens
+   ============================================================ */
+
 :root {
+  /* Motion */
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-fast: 180ms;
   --dur-med: 320ms;
-  --dur-slow: 520ms;
-  --r-xs: 8px;
-  --r-sm: 12px;
-  --r-md: 18px;
-  --r-lg: 24px;
-  --r-xl: 32px;
+  --dur-slow: 600ms;
+
+  /* Radii */
+  --r-xs: 10px;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-xl: 40px;
   --r-pill: 999px;
+
+  /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
-  --space-8: 48px;
-  --font-ui: "Inter", "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Typography — generous, modern */
+  --font-ui: "Inter", "SF Pro Display", "Segoe UI Variable", "Segoe UI",
+    -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
 }
 
-:root, [data-theme="light"] {
-  color-scheme: light;
-  --bg-0: #eef2fb;
-  --bg-1: #f7f9ff;
-  --bg-grad-a: #dfe8fb;
-  --bg-grad-b: #f5e6ff;
-  --bg-grad-c: #e0f2ff;
-  --fg: #0b1220;
-  --fg-muted: #4a5568;
-  --fg-subtle: #7a8597;
-  --stroke: rgba(15, 23, 42, 0.08);
-  --stroke-strong: rgba(15, 23, 42, 0.16);
-  --glass-bg: rgba(255, 255, 255, 0.45);
-  --glass-bg-strong: rgba(255, 255, 255, 0.65);
-  --glass-highlight: rgba(255, 255, 255, 0.85);
-  --glass-shadow: rgba(15, 23, 42, 0.12);
-  --accent: #5b7cfa;
-  --accent-2: #8b5bfa;
-  --danger: #e5484d;
-  --success: #2fb56b;
-  --warning: #f0a726;
-}
-
+/* ---------- Dark (default for liquid-glass) ---------- */
+:root,
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg-0: #0a0d16;
-  --bg-1: #10141f;
-  --bg-grad-a: #1a1f3a;
-  --bg-grad-b: #3a1b4a;
-  --bg-grad-c: #0c2a3e;
-  --fg: #eef2fb;
-  --fg-muted: #b8c1d4;
-  --fg-subtle: #8591a8;
-  --stroke: rgba(255, 255, 255, 0.08);
-  --stroke-strong: rgba(255, 255, 255, 0.18);
-  --glass-bg: rgba(20, 24, 40, 0.45);
-  --glass-bg-strong: rgba(20, 24, 40, 0.65);
-  --glass-highlight: rgba(255, 255, 255, 0.14);
-  --glass-shadow: rgba(0, 0, 0, 0.45);
-  --accent: #7a94ff;
-  --accent-2: #b98bff;
-  --danger: #ff6b6f;
-  --success: #4ccf86;
-  --warning: #ffc257;
+
+  /* Deep, saturated ambient backdrop so refraction is visible */
+  --bg-0: #0a0613;
+  --bg-1: #120a24;
+  --bg-orb-1: #ff4d9d;     /* pink */
+  --bg-orb-2: #4a7dff;     /* blue */
+  --bg-orb-3: #a855ff;     /* violet */
+  --bg-orb-4: #22d3ee;     /* cyan */
+  --bg-orb-5: #ffbe4d;     /* gold */
+
+  --fg: #f5f3ff;
+  --fg-muted: #c4b9e8;
+  --fg-subtle: #8a7fad;
+
+  /* Glass surfaces — translucent, strong blur, visible edges */
+  --glass-fill: rgba(255, 255, 255, 0.06);
+  --glass-fill-strong: rgba(255, 255, 255, 0.12);
+  --glass-fill-bright: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-strong: rgba(255, 255, 255, 0.22);
+  --glass-shine: rgba(255, 255, 255, 0.65);
+  --glass-inner-shadow: rgba(0, 0, 0, 0.35);
+
+  --accent: #b88cff;
+  --accent-2: #6ea8ff;
+  --accent-warm: #ff7bb0;
+  --danger: #ff5d7d;
+  --success: #4de3a4;
+  --warning: #ffc85a;
+
+  --msg-mine-a: #7c5cff;
+  --msg-mine-b: #b44dff;
 }
 
+/* ---------- Light (optional) ---------- */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-0: #f2edff;
+  --bg-1: #e8f0ff;
+  --bg-orb-1: #ff9ad2;
+  --bg-orb-2: #89b0ff;
+  --bg-orb-3: #c98cff;
+  --bg-orb-4: #7fe2f0;
+  --bg-orb-5: #ffd288;
+
+  --fg: #170a33;
+  --fg-muted: #4e3b72;
+  --fg-subtle: #8a7fad;
+
+  --glass-fill: rgba(255, 255, 255, 0.55);
+  --glass-fill-strong: rgba(255, 255, 255, 0.72);
+  --glass-fill-bright: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(23, 10, 51, 0.08);
+  --glass-border-strong: rgba(23, 10, 51, 0.18);
+  --glass-shine: rgba(255, 255, 255, 0.9);
+  --glass-inner-shadow: rgba(23, 10, 51, 0.06);
+
+  --accent: #7c5cff;
+  --accent-2: #4a7dff;
+  --accent-warm: #ff5d9d;
+  --danger: #e5384d;
+  --success: #21b574;
+  --warning: #e59a2a;
+}
+
+/* System prefers-color-scheme follows dark */
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] {
     color-scheme: dark;
-    --bg-0: #0a0d16;
-    --bg-1: #10141f;
-    --bg-grad-a: #1a1f3a;
-    --bg-grad-b: #3a1b4a;
-    --bg-grad-c: #0c2a3e;
-    --fg: #eef2fb;
-    --fg-muted: #b8c1d4;
-    --fg-subtle: #8591a8;
-    --stroke: rgba(255, 255, 255, 0.08);
-    --stroke-strong: rgba(255, 255, 255, 0.18);
-    --glass-bg: rgba(20, 24, 40, 0.45);
-    --glass-bg-strong: rgba(20, 24, 40, 0.65);
-    --glass-highlight: rgba(255, 255, 255, 0.14);
-    --glass-shadow: rgba(0, 0, 0, 0.45);
-    --accent: #7a94ff;
-    --accent-2: #b98bff;
+    --bg-0: #0a0613;
+    --bg-1: #120a24;
+    --fg: #f5f3ff;
+    --fg-muted: #c4b9e8;
+    --fg-subtle: #8a7fad;
+    --glass-fill: rgba(255, 255, 255, 0.06);
+    --glass-fill-strong: rgba(255, 255, 255, 0.12);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-shine: rgba(255, 255, 255, 0.65);
   }
 }

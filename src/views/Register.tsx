@@ -23,7 +23,7 @@ export function Register() {
     e.preventDefault();
     setErr(null);
     if (pwd !== pwd2) return setErr("Пароли не совпадают");
-    if (pwd.length < 6) return setErr("Пароль должен быть минимум 6 символов");
+    if (pwd.length < 6) return setErr("Пароль — минимум 6 символов");
     setBusy(true);
     try {
       const c = await api.requestCode(email.trim());
@@ -31,80 +31,111 @@ export function Register() {
       setStep("code");
     } catch (e: any) {
       setErr(typeof e === "string" ? e : e?.message ?? "Ошибка. Проверьте адрес сервера в настройках.");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
   async function verifyAndRegister(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null);
-    setBusy(true);
+    setErr(null); setBusy(true);
     try {
       const r = await api.register(email.trim(), nick.trim(), pwd, pwd2, code.trim());
       if (!r.ok || !r.user) setErr(r.message ?? "Не удалось зарегистрироваться");
       else setUser(r.user);
     } catch (e: any) {
       setErr(typeof e === "string" ? e : e?.message ?? "Ошибка");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
   return (
-    <motion.div
-      className="auth-viewport"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="auth-card lg-surface lg-surface--strong lg-refract">
-        <div>
-          <h1 className="auth-card__hello">Создать аккаунт</h1>
-          <p className="auth-card__sub">
-            {step === "form" ? "Заполните данные — мы отправим код подтверждения" : "Введите код подтверждения"}
-          </p>
+    <div className="auth-stage">
+      <motion.div
+        className="auth-card lg lg--strong"
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="auth-hero">
+          <div className="auth-hero__logo">O</div>
+          <div className="auth-hero__title">Создать аккаунт</div>
+          <div className="auth-hero__sub">
+            {step === "form" ? "Заполните данные — отправим код подтверждения" : "Введите код"}
+          </div>
         </div>
+
         {step === "form" && (
-          <form className="form" onSubmit={requestCode}>
-            <div className="form__field"><label className="label">Почта</label><input type="email" className="lg-input" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-            <div className="form__field"><label className="label">Никнейм</label><input className="lg-input" value={nick} onChange={(e) => setNick(e.target.value)} required minLength={2} maxLength={32} /></div>
-            <div className="form__field"><label className="label">Пароль</label><input type="password" className="lg-input" value={pwd} onChange={(e) => setPwd(e.target.value)} required minLength={6} /></div>
-            <div className="form__field">
-              <label className="label">Повторите пароль</label>
-              <input type="password" className={`lg-input ${mismatch ? "lg-input--error" : ""}`} value={pwd2} onChange={(e) => setPwd2(e.target.value)} required />
-              {mismatch && <div className="error-hint">Пароли не совпадают</div>}
+          <form onSubmit={requestCode} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="field">
+              <label className="field__label">Почта</label>
+              <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            {err && <div className="error-hint">{err}</div>}
-            <motion.button type="submit" className="lg-button lg-button--primary" whileTap={{ scale: 0.98 }} disabled={busy}>
-              {busy ? "Отправка кода…" : "Отправить код"}
+            <div className="field">
+              <label className="field__label">Никнейм</label>
+              <input className="input" value={nick} onChange={(e) => setNick(e.target.value)} required minLength={2} maxLength={32} />
+            </div>
+            <div className="field">
+              <label className="field__label">Пароль</label>
+              <input type="password" className="input" value={pwd} onChange={(e) => setPwd(e.target.value)} required minLength={6} />
+            </div>
+            <div className="field">
+              <label className="field__label">Повторите пароль</label>
+              <input
+                type="password"
+                className={`input ${mismatch ? "input--error" : ""}`}
+                value={pwd2}
+                onChange={(e) => setPwd2(e.target.value)}
+                required
+              />
+              {mismatch && <div className="hint-error">Пароли не совпадают</div>}
+            </div>
+
+            {err && <div className="hint-error">{err}</div>}
+
+            <motion.button
+              type="submit"
+              className="btn btn--primary"
+              whileTap={{ scale: 0.98 }}
+              disabled={busy}
+              style={{ padding: "14px 20px", fontSize: 14 }}
+            >
+              {busy ? "Отправка…" : "Отправить код"}
             </motion.button>
           </form>
         )}
+
         {step === "code" && (
-          <form className="form" onSubmit={verifyAndRegister}>
-            <div className="muted" style={{ fontSize: 13 }}>
+          <form onSubmit={verifyAndRegister} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="muted" style={{ fontSize: 13, textAlign: "center" }}>
               Код отправлен на сервер.
-              {sentCode && <> <span className="subtle">(dev: <b>{sentCode}</b>)</span></>}
+              {sentCode && <> <span className="subtle">(dev: <b style={{ color: "var(--accent)" }}>{sentCode}</b>)</span></>}
             </div>
-            <div className="form__field">
-              <label className="label">Код подтверждения</label>
-              <input className="lg-input" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/[^\d]/g, "").slice(0, 6))} required maxLength={6} />
+            <div className="field">
+              <label className="field__label">Код подтверждения</label>
+              <input
+                className="input"
+                inputMode="numeric"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                required
+                maxLength={6}
+                style={{ fontSize: 20, letterSpacing: "0.3em", textAlign: "center" }}
+              />
             </div>
-            {err && <div className="error-hint">{err}</div>}
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <button type="button" className="lg-button" onClick={() => setStep("form")}>Назад</button>
-              <motion.button type="submit" className="lg-button lg-button--primary" whileTap={{ scale: 0.98 }} disabled={busy}>
+            {err && <div className="hint-error">{err}</div>}
+            <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>
+              <button type="button" className="btn" onClick={() => setStep("form")}>Назад</button>
+              <motion.button type="submit" className="btn btn--primary" whileTap={{ scale: 0.98 }} disabled={busy}>
                 {busy ? "Проверка…" : "Подтвердить"}
               </motion.button>
             </div>
           </form>
         )}
-        <div className="auth-card__link">
-          <a href="#" onClick={(e) => { e.preventDefault(); setRoute("login"); }}>Уже есть аккаунт? Войти</a>
+
+        <div className="link-row">
+          <a href="#" onClick={(e) => { e.preventDefault(); setRoute("login"); }}>
+            Уже есть аккаунт? Войти
+          </a>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

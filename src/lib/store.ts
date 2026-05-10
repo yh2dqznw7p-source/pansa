@@ -3,20 +3,24 @@ import type { User } from "../types";
 import { api } from "./api";
 
 export type Theme = "light" | "dark" | "system";
-export type Route = "login" | "register" | "home" | "chats" | "settings";
+export type Route = "login" | "register" | "chats" | "discover" | "settings";
 
 interface AppState {
   user: User | null;
   route: Route;
   theme: Theme;
+  activeChatId: string | null;
   topUpOpen: boolean;
+
   notifications: boolean;
   sounds: boolean;
   readReceipts: boolean;
   lastSeen: boolean;
   compactChats: boolean;
+
   setUser: (u: User | null) => void;
   setRoute: (r: Route) => void;
+  setActiveChat: (id: string | null) => void;
   setTheme: (t: Theme) => void;
   openTopUp: () => void;
   closeTopUp: () => void;
@@ -27,14 +31,11 @@ interface AppState {
 
 const LS_KEY = "offmessenger:settings";
 
-function loadSettings() {
+function loadSettings(): Partial<AppState> {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) as Partial<AppState>;
-  } catch {
-    return {};
-  }
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
 }
 
 function saveSettings(s: Partial<AppState>) {
@@ -47,7 +48,7 @@ function saveSettings(s: Partial<AppState>) {
       lastSeen: s.lastSeen,
       compactChats: s.compactChats,
     }));
-  } catch { /* ignore */ }
+  } catch {}
 }
 
 const initial = loadSettings();
@@ -55,15 +56,19 @@ const initial = loadSettings();
 export const useApp = create<AppState>((set, get) => ({
   user: null,
   route: "login",
-  theme: (initial.theme as Theme) ?? "system",
+  theme: (initial.theme as Theme) ?? "dark",
+  activeChatId: null,
   topUpOpen: false,
+
   notifications: initial.notifications ?? true,
   sounds: initial.sounds ?? true,
   readReceipts: initial.readReceipts ?? true,
   lastSeen: initial.lastSeen ?? true,
   compactChats: initial.compactChats ?? false,
-  setUser: (u) => set({ user: u, route: u ? "home" : "login" }),
+
+  setUser: (u) => set({ user: u, route: u ? "chats" : "login" }),
   setRoute: (r) => set({ route: r }),
+  setActiveChat: (id) => set({ activeChatId: id }),
   setTheme: (t) => {
     document.documentElement.setAttribute("data-theme", t);
     set({ theme: t });
@@ -78,11 +83,15 @@ export const useApp = create<AppState>((set, get) => ({
   }),
   refreshUser: async () => {
     const u = await api.currentUser();
-    set({ user: u, route: u ? (get().route === "login" || get().route === "register" ? "home" : get().route) : "login" });
+    const cur = get().route;
+    set({
+      user: u,
+      route: u ? (cur === "login" || cur === "register" ? "chats" : cur) : "login",
+    });
   },
   logout: async () => {
     await api.logout();
-    set({ user: null, route: "login" });
+    set({ user: null, route: "login", activeChatId: null });
   },
 }));
 

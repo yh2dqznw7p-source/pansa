@@ -1,0 +1,50 @@
+{
+  "productName": "OffMessenger",
+  "version": "0.1.0",
+  "identifier": "com.offmessenger.client",
+  "build": {
+    "beforeDevCommand": "npm run dev:client",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build:client",
+    "frontendDist": "../dist/client"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "OffMessenger",
+        "url": "index.html",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "decorations": true,
+        "transparent": true,
+        "visible": true,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": { "csp": null },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "wix": { "language": ["en-US"] },
+      "nsis": { "installMode": "currentUser" }
+    },
+    "category": "SocialNetworking",
+    "shortDescription": "Liquid-glass desktop messenger",
+    "longDescription": "OffMessenger — desktop messenger with liquid-glass interface, token top-up, real-time chats over a self-hosted server."
+  }
+}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["src-tauri", "server"]
+members = ["client", "support", "server"]
 
 [workspace.package]
 version = "0.1.0"
@@ -27,7 +27,6 @@ jsonwebtoken = "9"
 rusqlite = { version = "0.31", features = ["bundled"] }
 r2d2 = "0.8"
 r2d2_sqlite = "0.24"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 futures-util = "0.3"
 
 [profile.release]

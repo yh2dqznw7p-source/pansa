@@ -3,14 +3,17 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "OffMessenger + OffMessenger.Support — desktop messenger with liquid-glass UI",
+  "description": "OffMessenger — liquid-glass desktop messenger + Support console",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "dev:client": "cross-env APP=client vite",
+    "dev:support": "cross-env APP=support vite",
+    "build:client": "tsc --noEmit && cross-env APP=client vite build",
+    "build:support": "tsc --noEmit && cross-env APP=support vite build",
+    "build": "npm run build:client && npm run build:support",
+    "tauri:client": "tauri --config client/tauri.conf.json",
+    "tauri:support": "tauri --config support/tauri.conf.json",
+    "tauri:build:client": "tauri build --config client/tauri.conf.json --bundles msi nsis",
+    "tauri:build:support": "tauri build --config support/tauri.conf.json --bundles msi nsis"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",
@@ -25,6 +28,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "cross-env": "^7.0.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
   }

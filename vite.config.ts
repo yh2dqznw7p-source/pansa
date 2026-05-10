@@ -2,29 +2,31 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
-const host = process.env.TAURI_DEV_HOST;
+// Each Tauri app has its own `index.html` in its crate directory, with
+// `frontendDist` pointing to `../dist/<name>`. We build both via `--app` env.
 
-export default defineConfig(async () => ({
-  plugins: [react()],
-  clearScreen: false,
-  server: {
-    port: 1420,
-    strictPort: true,
-    host: host || false,
-    hmr: host
-      ? { protocol: "ws", host, port: 1421 }
-      : undefined,
-    watch: { ignored: ["**/src-tauri/**"] },
-  },
-  build: {
-    target: "chrome110",
-    minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
-    sourcemap: !!process.env.TAURI_DEBUG,
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, "index.html"),
-        support: resolve(__dirname, "support.html"),
-      },
+type AppName = "client" | "support";
+
+function configFor(app: AppName) {
+  const port = app === "client" ? 1420 : 1421;
+  return defineConfig({
+    root: resolve(__dirname, app),
+    publicDir: false,
+    plugins: [react()],
+    clearScreen: false,
+    server: {
+      port,
+      strictPort: true,
+      watch: { ignored: ["**/client/src-tauri/**", "**/support/src-tauri/**", "**/target/**"] },
     },
-  },
-}));
+    build: {
+      outDir: resolve(__dirname, `dist/${app}`),
+      emptyOutDir: true,
+      target: "chrome110",
+      minify: "esbuild",
+    },
+  });
+}
+
+const app = (process.env.APP as AppName) || "client";
+export default configFor(app);

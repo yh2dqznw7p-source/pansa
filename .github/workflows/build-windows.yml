@@ -1,4 +1,4 @@
-name: Build Windows (MSI / NSIS EXE)
+name: Build Windows (client + support .exe)
 
 on:
   push:
@@ -8,41 +8,39 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+        with: { node-version: 20, cache: npm }
 
       - name: Setup Rust (stable)
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
+        with: { targets: x86_64-pc-windows-msvc }
 
       - name: Cargo cache
         uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "."
+        with: { workspaces: "." }
 
-      - name: Install frontend deps
+      - name: npm ci
         run: npm ci
 
-      - name: Build frontend
-        run: npm run build
+      - name: Build frontends
+        run: |
+          npm run build:client
+          npm run build:support
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli@^2
 
-      - name: Build Tauri (MSI + NSIS)
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ""
-        run: npx tauri build --bundles msi nsis
+      - name: Build client (MSI + NSIS)
+        run: npx tauri build --config client/tauri.conf.json --bundles msi nsis
+
+      - name: Build support (MSI + NSIS)
+        run: npx tauri build --config support/tauri.conf.json --bundles msi nsis
 
       - name: Collect artifacts
         shell: pwsh
@@ -51,20 +49,13 @@ jobs:
           Get-ChildItem -Recurse -Path target/release/bundle -Include *.msi,*.exe -ErrorAction SilentlyContinue | ForEach-Object {
             Copy-Item $_.FullName -Destination artifacts -Force
           }
+          if (Test-Path target/release/OffMessenger.exe) { Copy-Item target/release/OffMessenger.exe -Destination artifacts -Force }
+          if (Test-Path "target/release/OffMessenger Support.exe") { Copy-Item "target/release/OffMessenger Support.exe" -Destination artifacts -Force }
           Get-ChildItem artifacts
 
-      - name: Upload installers
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: offmessenger-windows-installers
+          name: offmessenger-windows
           path: artifacts/*
           if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload portable exe
-        uses: actions/upload-artifact@v4
-        with:
-          name: offmessenger-portable-exe
-          path: target/release/OffMessenger.exe
-          if-no-files-found: warn
           retention-days: 30

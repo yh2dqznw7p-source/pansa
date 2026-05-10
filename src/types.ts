@@ -28,6 +28,7 @@ export interface Chat {
   owner_id: string;
   created_at: number;
   last_message_at: number;
+  last_message?: string | null;
 }
 
 export interface Message {
@@ -38,8 +39,6 @@ export interface Message {
   text: string;
   created_at: number;
 }
-
-export type ComplaintStatus = "open" | "inprogress" | "resolved" | "rejected";
 
 export interface Complaint {
   id: string;
