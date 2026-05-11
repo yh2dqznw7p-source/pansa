@@ -126,6 +126,7 @@ export const api = {
 
   searchUsers: (q: string) => request<User[]>("GET", `/api/users/search?q=${encodeURIComponent(q)}`),
   openDm: (username: string) => request<Chat>("POST", "/api/dm/open", { username }),
+  openDmById: (user_id: string) => request<Chat>("POST", "/api/dm/open", { user_id }),
 
   listChats: () => request<Chat[]>("GET", "/api/chats"),
   createChat: (title: string) => request<Chat>("POST", "/api/chats", { title }),

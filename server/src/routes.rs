@@ -281,15 +281,28 @@ async fn open_dm(
     Json(req): Json<OpenDmReq>,
 ) -> Response {
     let claims = match require_auth(&state, &headers) { Ok(c) => c, Err(r) => return r };
-    let uname = req.username.trim().trim_start_matches('@');
-    if uname.is_empty() {
-        return err(StatusCode::BAD_REQUEST, "empty username");
-    }
-    let peer = match db::get_user_by_username(&state.db, uname) {
-        Ok(Some(u)) => u,
-        Ok(None) => return err(StatusCode::NOT_FOUND, "user not found"),
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+
+    // Resolve peer: try username first, then user_id.
+    let peer = if let Some(ref uname) = req.username {
+        let uname = uname.trim().trim_start_matches('@');
+        if uname.is_empty() {
+            return err(StatusCode::BAD_REQUEST, "empty username");
+        }
+        match db::get_user_by_username(&state.db, uname) {
+            Ok(Some(u)) => u,
+            Ok(None) => return err(StatusCode::NOT_FOUND, "user not found by username"),
+            Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+        }
+    } else if let Some(ref uid) = req.user_id {
+        match db::get_user(&state.db, uid) {
+            Ok(Some(u)) => u,
+            Ok(None) => return err(StatusCode::NOT_FOUND, "user not found by id"),
+            Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, &format!("db: {e}")),
+        }
+    } else {
+        return err(StatusCode::BAD_REQUEST, "provide username or user_id");
     };
+
     if peer.id == claims.sub {
         return err(StatusCode::BAD_REQUEST, "cannot open DM with yourself");
     }

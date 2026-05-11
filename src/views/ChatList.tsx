@@ -65,11 +65,14 @@ export function ChatList() {
   }, [chats, query]);
 
   async function openDmFromHit(u: User) {
-    if (!u.username) return;
     try {
-      const chat = await api.openDm(u.username);
+      const chat = u.username
+        ? await api.openDm(u.username)
+        : await api.openDmById(u.id);
       setActiveChat(chat.id);
       setQuery("");
+      // reload chat list
+      load();
     } catch {}
   }
 

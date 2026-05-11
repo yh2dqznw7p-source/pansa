@@ -135,7 +135,10 @@ pub struct CreateChatReq {
 
 #[derive(Deserialize)]
 pub struct OpenDmReq {
-    pub username: String,
+    /// Either @username or a raw user_id UUID — the server tries username first,
+    /// then falls back to user_id lookup.
+    pub username: Option<String>,
+    pub user_id: Option<String>,
 }
 
 #[derive(Deserialize)]
