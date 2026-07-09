@@ -2,9 +2,8 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, feat/manikuurr-site ]
-  pull_request:
-    branches: [ main, feat/manikuurr-site ]
+    branches: [ feat/manikuurr-site ]
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -20,20 +19,36 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Rust
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+          targets: aarch64-linux-android
 
-      - name: Setup Tauri
-        uses: tauri-apps/tauri-action@v0
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          projectPath: client   # ← важно! у тебя клиент в папке client
-          includeDebug: false
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@^2
+
+      - name: Build Android APK
+        working-directory: ./client
+        run: |
+          npx tauri android init || true
+          npx tauri android build --target aarch64 --release
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_ROOT }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: OffMessenger-Android
-          path: client/src-tauri/gen/android/app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
+          path: client/src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk
