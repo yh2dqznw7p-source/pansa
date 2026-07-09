@@ -39,16 +39,10 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli@^2
 
-      - name: Init Android (if needed)
+      - name: Init Android
         working-directory: ./client
         run: npx tauri android init || true
 
-      - name: Build Android APK
+      - name: Build Android APK (Release)
         working-directory: ./client
-        run: npx tauri android build --target aarch64 -- --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: OffMessenger-Android
-          path: client/src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+        run: npx tauri android build --target aarch64
