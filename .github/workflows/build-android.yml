@@ -1,0 +1,39 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, feat/manikuurr-site ]
+  pull_request:
+    branches: [ main, feat/manikuurr-site ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+
+      - name: Setup Tauri
+        uses: tauri-apps/tauri-action@v0
+        with:
+          projectPath: client   # ← важно! у тебя клиент в папке client
+          includeDebug: false
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OffMessenger-Android
+          path: client/src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
