@@ -1,48 +1,84 @@
-name: Build Android APK
+name: Build Android (client debug .apk)
+
+# Кладите этот файл в .github/workflows/build-android.yml в репозитории.
+# Раннер Ubuntu от GitHub уже содержит Android SDK (переменная ANDROID_SDK_ROOT
+# задана заранее) — донастраиваем только NDK, JDK и Rust-таргет.
+#
+# Debug-сборка подписывается автоматическим android debug keystore —
+# отдельный keystore не нужен, apk сразу ставится на телефон.
 
 on:
   push:
-    branches: [ feat/manikuurr-site ]
+    branches: ["**"]
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
 
-      - name: Setup Rust
+      - name: Configure Android SDK/NDK env
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          NDK_VERSION=$(ls "$ANDROID_SDK_ROOT/ndk" | sort -V | tail -n1)
+          echo "Using NDK $NDK_VERSION"
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+          BUILD_TOOLS=$(ls "$ANDROID_SDK_ROOT/build-tools" | sort -V | tail -n1)
+          echo "$ANDROID_SDK_ROOT/build-tools/$BUILD_TOOLS" >> "$GITHUB_PATH"
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+
+      - name: Setup Rust (stable, arm64 Android target)
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Cargo cache
+        uses: swatinem/rust-cache@v2
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          workspaces: "."
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: npm ci
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build:client
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli@^2
 
-      - name: Init Android
-        working-directory: ./client
-        run: npx tauri android init || true
+      - name: Init Android project (generates client/gen/android)
+        run: npx tauri android init --config client/tauri.conf.json || (cd client && npx tauri android init)
 
-      - name: Build Android APK (Release)
-        working-directory: ./client
-        run: npx tauri android build --target aarch64
+      - name: Build debug APK (arm64 only, self-signed for sideloading)
+        run: npx tauri android build --config client/tauri.conf.json --debug --target aarch64 || (cd client && npx tauri android build --debug --target aarch64)
+
+      - name: Locate APK
+        shell: bash
+        run: |
+          mkdir -p artifact-out
+          find client/gen/android -name "*.apk" -exec cp {} artifact-out/ \;
+          ls -la artifact-out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OffMessenger-Android-debug
+          path: artifact-out/*.apk
+          if-no-files-found: error
+          retention-days: 30
